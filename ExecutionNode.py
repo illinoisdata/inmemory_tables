@@ -1,5 +1,4 @@
 import time
-import gc
 from utils import *
 
 class ExecutionNode(object):
@@ -38,12 +37,12 @@ class ExecutionNode(object):
         if serialize_function:
             self.serialize_function = serialize_function
         else:
-            self.serialize_function = pickle_result
+            self.serialize_function = parquet_result
 
         if deserialize_function:
             self.deserialize_function = deserialize_function
         else:
-            self.deserialize_function = unpickle_result
+            self.deserialize_function = unparquet_result
 
         # Number of results to keep track of when computing rolling averages.
         self.ROLLING_AVG_WINDOW_SIZE = 10
@@ -137,7 +136,6 @@ class ExecutionNode(object):
         time_to_serialize = time.time() - start
         
         self.result = None
-        gc.collect()
 
         # Record time to serialize
         self.time_to_serialize_history.append(time_to_serialize)

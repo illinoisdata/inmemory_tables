@@ -171,7 +171,7 @@ class Optimizer(object):
 
             if debug:
                 print("Time save:", new_time_save)
-                print("Max memory usage:", new_peak_memory_usage)
+                print("Peak memory usage:", new_peak_memory_usage)
             
             return new_store_in_memory, new_time_save, new_peak_memory_usage
         
@@ -255,7 +255,7 @@ class Optimizer(object):
                     self.node_sizes, self.execution_graph.store_in_memory)
         
         if debug:
-            print("max memory usage:", new_peak_memory_usage)
+            print("Peak memory usage:", new_peak_memory_usage)
 
         return new_execution_order, new_peak_memory_usage
 

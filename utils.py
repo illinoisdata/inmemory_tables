@@ -1,5 +1,5 @@
-import pickle
 import io
+import fastparquet
 import polars as pl
 import networkx as nx
 from collections import defaultdict
@@ -48,17 +48,18 @@ def estimate_polars_table_size(table):
 
 """
 Default serialization function for ExecutionNode if none is provided.
-Stores a file using pickle.
+Stores a polars table using parquet.
 """
-def pickle_result(result, filename):
-    pickle.dump(result, open('disk/' + filename + '.pickle', 'wb'))
-
+def parquet_result(result, filename):
+    result.to_parquet(open('disk/' + filename + '.parquet', 'wb'))
+    #print("serialized", filename)
+    
 """
 Default deserialization function for ExecutionNode if none is provided.
-Loads a file using pickle.
+Loads a polars table using parquet.
 """
-def unpickle_result(filename):
-    return pickle.load(open('disk/' + filename + '.pickle', 'rb'))
+def unparquet_result(filename):
+    return pl.read_parquet(open('disk/' + filename + '.parquet', 'rb'))
 
 """
 Average of a list.

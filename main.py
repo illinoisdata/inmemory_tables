@@ -1,7 +1,6 @@
 from ExecutionNode import *
 from ExecutionGraph import *
 from Optimizer import *
-from utils import *
 from tpcds_queries import *
 import polars as pl
 
@@ -22,4 +21,4 @@ if __name__ == '__main__':
     optimizer.optimize(debug = True)
 
     # Evaluate efficiency after optimization
-    execution_graph.execute(debug = True)
+    execution_graph.execute(debug = False, save_inmemory_tables = True)

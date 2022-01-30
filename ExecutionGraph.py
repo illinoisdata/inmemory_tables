@@ -1,7 +1,7 @@
 import time
-import gc
 import networkx as nx
 import matplotlib.pyplot as plt
+import threading
 from ExecutionNode import *
 
 class ExecutionGraph(object):
@@ -71,8 +71,12 @@ class ExecutionGraph(object):
     """
     Run program and return results from sinks.
     debug: Show memory footprint during execution.
+    save_inmemory_tables: Serialize and write to disk tables flagged for
+    in-memory storage in parallel before garage collecting them.
     """
-    def execute(self, debug = False):
+    def execute(self, debug = False, save_inmemory_tables = 0):
+        pool = Pool(processes=2)
+        
         # Reset counters
         self.peak_memory_usage_counter = 0
         self.serialize_time_counter = 0
@@ -119,8 +123,14 @@ class ExecutionGraph(object):
                 parent_node = self.node_dict[parent_name]
                 if (num_successors_dict[parent_name] == 0 and
                         parent_name in self.store_in_memory):
+                    
+                    # Multithreaded serialization if enabled
+                    if save_inmemory_tables:
+                        threading.Thread(target = parquet_result(
+                                             parent_node.result,
+                                             parent_name)).start()
                     parent_node.result = None
-                    gc.collect()
+                    
                     self.current_memory_usage -= parent_node.get_result_size()
 
             if debug:
@@ -150,3 +160,5 @@ class ExecutionGraph(object):
             print("total deserialize time:", self.time_to_deserialize_counter)
             print("total serialize time:", self.time_to_serialize_counter)
             print("maximum memory usage:", self.peak_memory_usage_counter)
+
+        return self.execution_time_counter
