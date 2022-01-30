@@ -75,8 +75,6 @@ class ExecutionGraph(object):
     in-memory storage in parallel before garage collecting them.
     """
     def execute(self, debug = False, save_inmemory_tables = 0):
-        pool = Pool(processes=2)
-        
         # Reset counters
         self.peak_memory_usage_counter = 0
         self.serialize_time_counter = 0

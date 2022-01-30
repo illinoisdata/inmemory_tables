@@ -1,5 +1,4 @@
 import io
-import fastparquet
 import polars as pl
 import networkx as nx
 from collections import defaultdict
@@ -52,7 +51,6 @@ Stores a polars table using parquet.
 """
 def parquet_result(result, filename):
     result.to_parquet(open('disk/' + filename + '.parquet', 'wb'))
-    #print("serialized", filename)
     
 """
 Default deserialization function for ExecutionNode if none is provided.

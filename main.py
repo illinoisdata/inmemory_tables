@@ -21,4 +21,4 @@ if __name__ == '__main__':
     optimizer.optimize(debug = True)
 
     # Evaluate efficiency after optimization
-    execution_graph.execute(debug = False, save_inmemory_tables = True)
+    execution_graph.execute(debug = False, save_inmemory_tables = )
