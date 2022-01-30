@@ -37,8 +37,9 @@ class Optimizer(object):
     Should only be called after info on node sizes/costs are available from dry
     running the execution graph once.
     debug: show EM iteration count & info during optimization.
+    sa_iters: Number of simulated annealing iterations to run per EM iteration.
     """
-    def optimize(self, debug = False):
+    def optimize(self, debug = False, sa_iters = 1000):
         # Retrieve node sizes & scores for optimization algorithm
         self.node_sizes = {node.name: node.get_result_size()
                         for node in self.execution_graph.node_dict.values()}
@@ -89,7 +90,8 @@ class Optimizer(object):
             new_execution_order, new_peak_memory_usage = self.dfs_topological(
                 debug = debug)
             new_execution_order, new_peak_memory_usage = \
-                self.simulated_annealing(new_execution_order, debug = debug)
+                self.simulated_annealing(new_execution_order,
+                                         n_iters = sa_iters, debug = debug)
             prev_time_save = new_time_save
 
             # Early stop if peak memory usage violates memory limit
@@ -289,7 +291,8 @@ class Optimizer(object):
     weighted minimum linear arrangement via simulated annealing.
     new_execution_order: a default execution order (passed from step 3)
     """
-    def simulated_annealing(self, new_execution_order, debug = False):
+    def simulated_annealing(self, new_execution_order, n_iters = 1000,
+                            debug = False):
         memory_usage = {name: int(name in self.execution_graph.store_in_memory) *
                         self.node_sizes[name]
                         for name in self.execution_graph.graph.nodes}
@@ -306,13 +309,12 @@ class Optimizer(object):
         cur_score = 0
         scores = []
 
-        # Controls for simulated annealing. Higher temperatire means the
-        # algorithm is more likely to pick a worse solution at any time step.
-        n_iterations = 1000
+        # Higher temperatire leads to higher probability of picking a worse
+        # solution at any time step.
         temperature = \
             max(list(memory_usage.values())) / len(list(memory_usage.values()))
         
-        for i in range(n_iterations):
+        for i in range(n_iters):
             # Select some random node
             u = random.randint(0, len(new_execution_order) - 1)
             max_parent = max([node_name_to_idx[p]
