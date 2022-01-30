@@ -17,8 +17,9 @@ if __name__ == '__main__':
 
     # Create optimizer to jointly optimize nodes to store in memory & execution
     # order
+    
     optimizer = Optimizer(execution_graph, memory_limit = 200000000)
     optimizer.optimize(debug = True)
 
     # Evaluate efficiency after optimization
-    execution_graph.execute(debug = False, save_inmemory_tables = )
+    execution_graph.execute(debug = True)

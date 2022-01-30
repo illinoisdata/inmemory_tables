@@ -1,7 +1,9 @@
 import time
-import gc
 import copy
 import networkx as nx
+import random
+import math
+import matplotlib as plt
 from ortools.algorithms import pywrapknapsack_solver      
 from ExecutionGraph import *
 from utils import *
@@ -74,6 +76,8 @@ class Optimizer(object):
             
             # Early stop if time save cannot be improved
             if new_time_save <= prev_time_save:
+                if debug:
+                    print("New solution is worse, stopping EM............")
                 break
             
             self.execution_graph.store_in_memory = new_store_in_memory
@@ -84,16 +88,20 @@ class Optimizer(object):
                         
             new_execution_order, new_peak_memory_usage = self.dfs_topological(
                 debug = debug)
+            new_execution_order, new_peak_memory_usage = \
+                self.simulated_annealing(new_execution_order, debug = debug)
             prev_time_save = new_time_save
 
-            # Early stop if peak memory usage worsens
-            if new_peak_memory_usage > prev_peak_memory_usage:
+            # Early stop if peak memory usage violates memory limit
+            if new_peak_memory_usage > self.memory_limit:
                 break
 
             self.execution_graph.execution_order = new_execution_order
             
         if debug:
             print("Algorithm computation time:", time.time() - start)
+
+        return prev_time_save, prev_peak_memory_usage
 
     """
     Step 1: find all relevant maximal sets of results which act as constraints
@@ -224,7 +232,7 @@ class Optimizer(object):
         return new_store_in_memory, new_time_save, new_peak_memory_usage
 
     """
-    Step 3: find a better execution order by running DFS with a heuristic of
+    Step 3: Find a better execution order by running DFS with a heuristic of
     minimizing the amount of time large results stay in memory.
     Returns the new execution order and its peak memory usage.
     debug: Print memory usage given execution order.
@@ -275,3 +283,88 @@ class Optimizer(object):
                                             memory_usage)
 
         stack.append(name)
+
+    """
+    Step 4: Further improve the execution order by optimizing it in terms of
+    weighted minimum linear arrangement via simulated annealing.
+    new_execution_order: a default execution order (passed from step 3)
+    """
+    def simulated_annealing(self, new_execution_order, debug = False):
+        memory_usage = {name: int(name in self.execution_graph.store_in_memory) *
+                        self.node_sizes[name]
+                        for name in self.execution_graph.graph.nodes}
+
+        # Set up dictionaries for fast lookup
+        node_name_to_idx = {}
+        node_idx_to_name = {}
+        for i in range(len(new_execution_order)):
+            node_name_to_idx[new_execution_order[i]] = i
+            node_idx_to_name[i] = new_execution_order[i]
+
+        best_score = 0
+        best_order = new_execution_order
+        cur_score = 0
+        scores = []
+
+        # Controls for simulated annealing. Higher temperatire means the
+        # algorithm is more likely to pick a worse solution at any time step.
+        n_iterations = 1000
+        temperature = \
+            max(list(memory_usage.values())) / len(list(memory_usage.values()))
+        
+        for i in range(n_iterations):
+            # Select some random node
+            u = random.randint(0, len(new_execution_order) - 1)
+            max_parent = max([node_name_to_idx[p]
+                for p in self.execution_graph.graph
+                              .predecessors(node_idx_to_name[u])],
+                             default = 0)
+            min_child = min([node_name_to_idx[c]
+                for c in self.execution_graph.graph
+                              .successors(node_idx_to_name[u])],
+                            default = len(new_execution_order) - 1)
+
+            # Current node cannot be swapped
+            if min_child - max_parent <= 2:
+                continue
+
+            # Randomly select a valid position for swapping
+            v = random.randint(max_parent + 1, min_child - 1)
+
+            # Evaluate swap
+            score_change = minLA_change(self.execution_graph.graph,
+                                        node_idx_to_name, node_name_to_idx,
+                                        memory_usage, node_idx_to_name[u], v)
+
+            # Metropolis
+            t = temperature / float(i + 1)
+            
+            if (score_change > 0 or
+                random.random() < math.exp(score_change / t)):
+                minLA_apply(node_idx_to_name, node_name_to_idx,
+                            node_idx_to_name[u], v)
+
+                # Revert change if the order violates memory limit
+                cur_order = [v for k, v in sorted(node_idx_to_name.items())]
+                if compute_peak_memory_usage(self.execution_graph.graph,
+                    cur_order, self.node_sizes,
+                    self.execution_graph.store_in_memory) > self.memory_limit:
+                    minLA_apply(node_idx_to_name, node_name_to_idx,
+                            node_idx_to_name[v], u)
+                    
+                else:
+                    cur_score += score_change
+                    if cur_score > best_score:
+                        best_score = cur_score
+                        best_order = [v for
+                                  k, v in sorted(node_idx_to_name.items())]
+
+        # Compute peak memory usage
+        new_peak_memory_usage = compute_peak_memory_usage(
+                    self.execution_graph.graph, best_order,
+                    self.node_sizes, self.execution_graph.store_in_memory)
+        
+        if debug:
+            print("Peak memory usage:", new_peak_memory_usage)
+            
+        return best_order, new_peak_memory_usage

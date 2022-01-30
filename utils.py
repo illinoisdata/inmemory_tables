@@ -89,4 +89,63 @@ def compute_peak_memory_usage(graph, execution_order, node_sizes,
                 parent_name in store_in_memory):
                 current_memory_usage -= node_sizes[parent_name]
 
-    return max_memory_usage
+    return max_memory_usage   
+    
+"""
+Computes the change in minimum linear arrangement score resulting from moving
+node_to_move to new_node_pos.
+"""
+def minLA_change(graph, node_idx_to_name, node_name_to_idx,
+                 memory_usage, node_to_move, new_node_pos):
+    old_node_pos = node_name_to_idx[node_to_move]
+    change = 0
+
+    # Effect on neighbors
+    for parent_name in graph.predecessors(node_to_move):
+        change += (new_node_pos - old_node_pos) * memory_usage[parent_name]
+    for child_name in graph.successors(node_to_move):
+        change -= (new_node_pos - old_node_pos) * memory_usage[child_name]
+
+    # Forward movement
+    if new_node_pos > old_node_pos:
+        for i in range(old_node_pos + 1, new_node_pos + 1):
+            for parent_name in graph.predecessors(node_idx_to_name[i]):
+                if node_name_to_idx[parent_name] < old_node_pos:
+                    change -= memory_usage[parent_name]
+            for child_name in graph.successors(node_idx_to_name[i]):
+                if node_name_to_idx[child_name] > new_node_pos:
+                    change += memory_usage[child_name]
+
+    # Backward movement
+    else:
+        for i in range(new_node_pos, old_node_pos):
+            for parent_name in graph.predecessors(node_idx_to_name[i]):
+                if node_name_to_idx[parent_name] < new_node_pos:
+                    change -= memory_usage[parent_name]
+            for child_name in graph.successors(node_idx_to_name[i]):
+                if node_name_to_idx[child_name] > old_node_pos:
+                    change += memory_usage[child_name]
+
+    return change
+
+"""
+Applies the specified node movement by moving node_to_move to new_node_pos and
+updates the 2 dictionaries accordingly.
+"""
+def minLA_apply(node_idx_to_name, node_name_to_idx, node_to_move, new_node_pos):
+    old_node_pos = node_name_to_idx[node_to_move]
+
+    if new_node_pos > old_node_pos:
+        for i in range(old_node_pos + 1, new_node_pos + 1):
+            i_name = node_idx_to_name[i]
+            node_name_to_idx[i_name] = i - 1
+            node_idx_to_name[i - 1] = i_name
+
+    else:
+        for i in range(old_node_pos - 1, new_node_pos - 1, -1):
+            i_name = node_idx_to_name[i]
+            node_name_to_idx[i_name] = i + 1
+            node_idx_to_name[i + 1] = i_name
+
+    node_name_to_idx[node_to_move] = new_node_pos
+    node_idx_to_name[new_node_pos] = node_to_move
