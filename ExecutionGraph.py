@@ -1,4 +1,5 @@
 import time
+import gc
 import networkx as nx
 import matplotlib.pyplot as plt
 import threading
@@ -127,7 +128,10 @@ class ExecutionGraph(object):
                         threading.Thread(target = parquet_result(
                                              parent_node.result,
                                              parent_name)).start()
-                    parent_node.result = None
+                        parent_node.result = None
+                    else:
+                        parent_node.result = None
+                        gc.collect()
                     
                     self.current_memory_usage -= parent_node.get_result_size()
 

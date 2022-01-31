@@ -1,4 +1,5 @@
 import time
+import gc
 from utils import *
 
 class ExecutionNode(object):
@@ -136,6 +137,7 @@ class ExecutionNode(object):
         time_to_serialize = time.time() - start
         
         self.result = None
+        gc.collect()
 
         # Record time to serialize
         self.time_to_serialize_history.append(time_to_serialize)
