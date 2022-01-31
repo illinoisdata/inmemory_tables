@@ -75,7 +75,7 @@ class ExecutionGraph(object):
     save_inmemory_tables: Serialize and write to disk tables flagged for
     in-memory storage in parallel before garage collecting them.
     """
-    def execute(self, debug = False, save_inmemory_tables = 0):
+    def execute(self, debug = False, save_inmemory_tables = False):
         # Reset counters
         self.peak_memory_usage_counter = 0
         self.serialize_time_counter = 0
