@@ -16,17 +16,8 @@ import cProfile, pstats
 import psutil
 import scipy.stats
 
-def display_cpu():
-    global running
-    running = True
-
-    currentProcess = psutil.Process()
-    
-    while running:
-        print(currentProcess.cpu_percent(interval= 0.01))
-
 if __name__ == '__main__':   
-    
+    # Get node representation of a TPC-DS query 
     execution_nodes = get_tpcds_query_nodes(query_num = 5)
 
     # Create graph & add nodes
