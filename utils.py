@@ -1,7 +1,11 @@
 import io
 import polars as pl
 import networkx as nx
+import pickle
+import time
 from collections import defaultdict
+
+import psutil
 
 """
 Reads a TPC-DS table into a polars dataframe.
@@ -49,15 +53,16 @@ def estimate_polars_table_size(table):
 Default serialization function for ExecutionNode if none is provided.
 Stores a polars table using parquet.
 """
-def parquet_result(result, filename):
-    result.to_parquet(open('disk/' + filename + '.parquet', 'wb'))
+def parquet_result(result, filename, location = 'disk/', use_pyarrow = False):
+    result.to_parquet(open(location + filename + '.parquet', 'wb'),
+                      use_pyarrow = use_pyarrow)
     
 """
 Default deserialization function for ExecutionNode if none is provided.
 Loads a polars table using parquet.
 """
-def unparquet_result(filename):
-    return pl.read_parquet(open('disk/' + filename + '.parquet', 'rb'))
+def unparquet_result(filename, location = 'disk/'):
+    return pl.read_parquet(open(location + filename + '.parquet', 'rb'))    
 
 """
 Average of a list.
@@ -149,3 +154,12 @@ def minLA_apply(node_idx_to_name, node_name_to_idx, node_to_move, new_node_pos):
 
     node_name_to_idx[node_to_move] = new_node_pos
     node_idx_to_name[new_node_pos] = node_to_move
+
+"""
+Writer for concurrent serialization of in-memory tables.
+use_pyarrow is set to True to reduce the memory consumption of the thread
+calling this method.
+"""
+def mt_writer(task_queue):
+    for result, name in iter(task_queue.get, None):
+        parquet_result(result, name, use_pyarrow = True)

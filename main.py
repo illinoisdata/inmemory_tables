@@ -4,7 +4,29 @@ from Optimizer import *
 from tpcds_queries import *
 import polars as pl
 
-if __name__ == '__main__':
+import threading, queue
+import time
+import matplotlib.pyplot as plt
+import sns
+import copy
+import utils
+import os.path
+import os
+import cProfile, pstats
+import psutil
+import scipy.stats
+
+def display_cpu():
+    global running
+    running = True
+
+    currentProcess = psutil.Process()
+    
+    while running:
+        print(currentProcess.cpu_percent(interval= 0.01))
+
+if __name__ == '__main__':   
+    
     execution_nodes = get_tpcds_query_nodes(query_num = 5)
 
     # Create graph & add nodes
@@ -14,10 +36,9 @@ if __name__ == '__main__':
 
     # Dry run; store no nodes in memory
     execution_graph.execute(debug = True)
-
+    
     # Create optimizer to jointly optimize nodes to store in memory & execution
     # order
-    
     optimizer = Optimizer(execution_graph, memory_limit = 200000000)
     optimizer.optimize(debug = True)
 

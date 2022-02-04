@@ -1,5 +1,4 @@
 import time
-import gc
 from utils import *
 
 class ExecutionNode(object):
@@ -101,7 +100,7 @@ class ExecutionNode(object):
     """
     def execute(self, debug = False):
         if debug:
-            print("Executing node", self.name)
+            print("Executing node " + self.name)
             
         # Check for dependencies to be fully loaded
         for k, v in self.dependencies.items():
@@ -137,7 +136,6 @@ class ExecutionNode(object):
         time_to_serialize = time.time() - start
         
         self.result = None
-        gc.collect()
 
         # Record time to serialize
         self.time_to_serialize_history.append(time_to_serialize)

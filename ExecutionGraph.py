@@ -1,8 +1,8 @@
 import time
-import gc
 import networkx as nx
 import matplotlib.pyplot as plt
 import threading
+import queue
 from ExecutionNode import *
 
 class ExecutionGraph(object):
@@ -34,6 +34,10 @@ class ExecutionGraph(object):
         self.total_time_to_deserialize_counter = 0
         self.total_execution_time_counter = 0
 
+        # Queue & thread for multithreaded serialization of in-memory tables.
+        self.mt_queue = queue.Queue()
+        self.mt_thread = None
+        
     """
     Add nodes to the graph.
     """
@@ -91,6 +95,12 @@ class ExecutionGraph(object):
                           for i in self.execution_order]
         num_successors_dict = dict(zip(self.execution_order, num_successors))
 
+        # Start multithreaded table serializer
+        if save_inmemory_tables:
+            self.mt_thread = threading.Thread(target = mt_writer,
+                                             args = [self.mt_queue])
+            self.mt_thread.start()
+
         # Run nodes in given execution order
         for name in self.execution_order:
             node = self.node_dict[name]
@@ -125,13 +135,9 @@ class ExecutionGraph(object):
                     
                     # Multithreaded serialization if enabled
                     if save_inmemory_tables:
-                        threading.Thread(target = parquet_result(
-                                             parent_node.result,
-                                             parent_name)).start()
-                        parent_node.result = None
-                    else:
-                        parent_node.result = None
-                        gc.collect()
+                        self.mt_queue.put((parent_node.result, parent_name))
+                        
+                    parent_node.result = None
                     
                     self.current_memory_usage -= parent_node.get_result_size()
 
@@ -162,5 +168,10 @@ class ExecutionGraph(object):
             print("total deserialize time:", self.time_to_deserialize_counter)
             print("total serialize time:", self.time_to_serialize_counter)
             print("maximum memory usage:", self.peak_memory_usage_counter)
+
+        # Join multithreaded writer
+        if save_inmemory_tables:
+            self.mt_queue.put(None)
+            self.mt_thread.join()
 
         return self.execution_time_counter

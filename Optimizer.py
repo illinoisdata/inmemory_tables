@@ -30,6 +30,13 @@ class Optimizer(object):
 
         # Maximal sets acting as constraints for the MKP.
         self.maximal_sets = None
+
+    """
+    Baseline method of storing all nodes in memory.
+    """
+    def optimize_store_all_inmemory(self, debug = False):
+        for node in self.execution_graph.graph.nodes:
+            self.execution_graph.store_in_memory.add(node)
         
     """
     Run the EM algorithm for joint optimization of execution order & nodes
