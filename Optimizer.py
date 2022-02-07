@@ -4,6 +4,7 @@ import networkx as nx
 import random
 import math
 import matplotlib as plt
+import numpy as np
 from ortools.algorithms import pywrapknapsack_solver      
 from ExecutionGraph import *
 from utils import *
@@ -34,9 +35,218 @@ class Optimizer(object):
     """
     Baseline method of storing all nodes in memory.
     """
-    def optimize_store_all_inmemory(self, debug = False):
+    def store_nodes_all(self, debug = False):
+        new_store_in_memory = set()
         for node in self.execution_graph.graph.nodes:
-            self.execution_graph.store_in_memory.add(node)
+            new_store_in_memory.add(node)
+
+        new_time_save = sum([self.node_scores[i] for i in new_store_in_memory])
+        new_peak_memory_usage = compute_peak_memory_usage(
+                self.execution_graph.graph,
+                self.execution_graph.execution_order, self.node_sizes,
+                new_store_in_memory)
+
+        if debug:
+                print("Time save:", new_time_save)
+                print("Peak memory usage:", new_peak_memory_usage)
+
+        return new_store_in_memory, new_time_save, new_peak_memory_usage
+
+    """
+    Baseline method of storing no nodes in memory.
+    """
+    def store_nodes_none(self, debug = False):
+        if debug:
+                print("Time save: 0")
+                print("Peak memory usage: 0")
+                
+        return set(), 0, 0
+
+    """
+    Baseline greedy node selector
+    """
+    def store_nodes_greedy_forward(self, debug = False):
+        # Keep track of when to simulate garbage collection of results
+        num_successors = [len(list(self.execution_graph.graph.successors(i)))
+                          for i in self.execution_graph.execution_order]
+        num_successors_dict = dict(zip(self.execution_graph.execution_order,
+                                       num_successors))
+        
+        new_store_in_memory = set()
+        current_memory_usage = 0
+        
+        
+        for name in self.execution_graph.execution_order:
+
+            # Store node if possible
+            if self.node_sizes[name] <= self.memory_limit - current_memory_usage:
+                new_store_in_memory.add(name)
+                current_memory_usage += self.node_sizes[name]
+
+            # Find dependencies to garbage collect
+            dependencies_to_free = set()
+            for parent_name in self.execution_graph.graph.predecessors(name):
+                num_successors_dict[parent_name] -= 1
+                if (num_successors_dict[parent_name] == 0 and
+                    parent_name in new_store_in_memory):
+                    current_memory_usage -= self.node_sizes[parent_name]
+
+        new_time_save = sum([self.node_scores[i]
+                             for i in new_store_in_memory])
+        new_peak_memory_usage = compute_peak_memory_usage(
+                self.execution_graph.graph,
+                self.execution_graph.execution_order, self.node_sizes,
+                new_store_in_memory)
+
+        return new_store_in_memory, new_time_save, new_peak_memory_usage
+
+    """
+    Baseline greedy node selector, but goes through the execution order in
+    reverse
+    """
+    def store_nodes_greedy_backward(self, debug = False):
+        # Keep track of when to simulate garbage collection of results
+        num_successors = [0 for i in self.execution_graph.execution_order]
+        num_successors_dict = dict(zip(self.execution_graph.execution_order,
+                                       num_successors))
+        
+        new_store_in_memory = set()
+        current_memory_usage = 0
+        
+        for name in reversed(self.execution_graph.execution_order):
+            
+            # Find dependencies freed here
+            for parent_name in self.execution_graph.graph.predecessors(name):
+                if (num_successors_dict[parent_name] == 0 and
+                    self.node_sizes[parent_name] <=
+                    self.memory_limit - current_memory_usage):
+                    new_store_in_memory.add(parent_name)
+                    current_memory_usage += self.node_sizes[parent_name]
+                    
+                num_successors_dict[parent_name] += 1
+            
+            # node execution
+            if name in new_store_in_memory:
+                current_memory_usage -= self.node_sizes[name]
+                
+        new_time_save = sum([self.node_scores[i]
+                             for i in new_store_in_memory])
+        new_peak_memory_usage = compute_peak_memory_usage(
+                self.execution_graph.graph,
+                self.execution_graph.execution_order, self.node_sizes,
+                new_store_in_memory)
+
+        return new_store_in_memory, new_time_save, new_peak_memory_usage
+
+    """
+    Baseline greedy node selector, choosing the better result from iterating
+    forward or backward
+    """
+    def store_nodes_greedy(self, debug = False):
+        s_forward, t_forward, m_forward = \
+            self.store_nodes_greedy_forward(debug = debug)
+
+        s_backward, t_backward, m_backward = \
+            self.store_nodes_greedy_backward(debug = debug)
+
+        if t_forward >= t_backward:
+            if debug:
+                print("Time save:", t_forward)
+                print("Peak memory usage:", m_forward)
+                
+            return s_foward, t_forward, m_forward
+
+        if debug:
+                print("Time save:", t_backward)
+                print("Peak memory usage:", m_backward)
+
+        return s_backward, t_backward, m_backward
+        
+
+    """
+    Randomly select nodes to store given memory limit.
+    """
+    def store_nodes_random(self, debug = False):        
+        new_store_in_memory = set()
+        
+        for name in np.random.permutation(self.execution_graph.graph.nodes):
+            new_peak_memory_usage = compute_peak_memory_usage(
+                self.execution_graph.graph,
+                self.execution_graph.execution_order, self.node_sizes,
+                new_store_in_memory.union({name}))
+
+            if new_peak_memory_usage <= self.memory_limit:
+                new_store_in_memory.add(name)
+
+                
+        new_time_save = sum([self.node_scores[i]
+                             for i in new_store_in_memory])
+        new_peak_memory_usage = compute_peak_memory_usage(
+                self.execution_graph.graph,
+                self.execution_graph.execution_order, self.node_sizes,
+                new_store_in_memory)
+
+        if debug:
+                print("Time save:", new_time_save)
+                print("Peak memory usage:", new_peak_memory_usage)
+
+        return new_store_in_memory, new_time_save, new_peak_memory_usage
+
+    """
+    Select nodes to store using the MKP solver.
+    """
+    def store_nodes_mkp(self, debug = False):
+        self.find_maximal_sets(debug = debug)
+        new_store_in_memory, new_time_save, new_peak_memory_usage = \
+                            self.mkp(debug = debug)
+
+        return new_store_in_memory, new_time_save, new_peak_memory_usage
+
+    """
+    Function for choosing method to compute set of nodes to store in memory.
+    """
+    def store_nodes(self, method = "mkp", debug = False):
+        if method == "all":
+            return self.store_nodes_all(debug = debug)
+
+        if method == "none":
+            return self.store_nodes_none(debug = debug)
+
+        # Select the better of the results from iterating forward or reverse
+        if method == "greedy":
+            return self.store_nodes_greedy(debug = debug)
+
+        if method == "random":
+            return self.store_nodes_random(debug = debug)
+
+        if method == "mkp":
+            return self.store_nodes_mkp(debug = debug)
+
+        # no valid choice made
+        return self.store_nodes_none(debug = debug)
+
+    """
+    Function for choosing method to optimize topological order with.
+    """
+    def optimize_execution_order(self, method = "both", sa_iters = 1000,
+                                   debug = False):
+        if method == "both":
+            new_execution_order, _ = self.dfs_topological(
+                debug = debug)
+            return self.simulated_annealing(new_execution_order,
+                                         n_iters = sa_iters, debug = debug)
+
+        if method == "dfs":
+            return self.dfs_topological(debug = debug)
+
+        if method == "sa":
+            return self.simulated_annealing(
+                copy.deepcopy(self.execution_graph.execution_order),
+                                         n_iters = sa_iters, debug = debug)
+
+        # no valid choice made
+        return self.execution_graph.execution_order, self.memory_limit
+        
         
     """
     Run the EM algorithm for joint optimization of execution order & nodes
@@ -44,9 +254,16 @@ class Optimizer(object):
     Should only be called after info on node sizes/costs are available from dry
     running the execution graph once.
     debug: show EM iteration count & info during optimization.
+    store_nodes_method: method for selecting nodes to store in memory. See
+    the store_nodes function for a list of available methods.
+    execution_order_method: method for optimizing the execution order. See
+    the optimize_execution_order function for a list of available methods.
     sa_iters: Number of simulated annealing iterations to run per EM iteration.
     """
-    def optimize(self, debug = False, sa_iters = 1000):
+    def optimize(self, store_nodes_method = "mkp",
+                 execution_order_method = "both",
+                 sa_iters = 1000, debug = False):
+        
         # Retrieve node sizes & scores for optimization algorithm
         self.node_sizes = {node.name: node.get_result_size()
                         for node in self.execution_graph.node_dict.values()}
@@ -77,9 +294,10 @@ class Optimizer(object):
                 print("Iteration " + str(i + 1) + ":---------------------")
                 print("Finding nodes to store.............")
 
-            self.find_maximal_sets(debug = debug)
             new_store_in_memory, new_time_save, new_peak_memory_usage = \
-                                 self.mkp(debug = debug)
+                                 self.store_nodes(
+                                     method = store_nodes_method, debug = debug)
+            
             prev_peak_memory_usage = new_peak_memory_usage
             
             # Early stop if time save cannot be improved
@@ -94,11 +312,11 @@ class Optimizer(object):
             if debug:
                 print("Optimizing topological order.............")
                         
-            new_execution_order, new_peak_memory_usage = self.dfs_topological(
-                debug = debug)
             new_execution_order, new_peak_memory_usage = \
-                self.simulated_annealing(new_execution_order,
-                                         n_iters = sa_iters, debug = debug)
+                                 self.optimize_execution_order(
+                                     method = execution_order_method,
+                                     sa_iters = sa_iters, debug = debug)
+            
             prev_time_save = new_time_save
 
             # Early stop if peak memory usage violates memory limit
