@@ -18,12 +18,12 @@ import scipy.stats
 
 if __name__ == '__main__':   
     # Get node representation of a TPC-DS query 
-    execution_nodes = get_tpcds_query_nodes(query_num = 5)
+    execution_nodes = get_tpcds_query_nodes(query_num = 6)
 
     # Create graph & add nodes
     execution_graph = ExecutionGraph()
     execution_graph.add_nodes(execution_nodes)
-    execution_graph.build_graph()
+    execution_graph.build_graph(draw_graph = True)
 
     # Dry run; store no nodes in memory
     execution_graph.execute(debug = True)

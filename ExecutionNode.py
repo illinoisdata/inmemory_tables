@@ -108,13 +108,16 @@ class ExecutionNode(object):
                 print("Dependency", k, "not found")
                 return -1
 
-        # Try executing
+        # Execute
+        """
         try:
             self.result = self.instructions(*list(self.dependencies.values()))
         except Exception as inst:
             if debug:
                 print("Execution of", self.name, "failed:", inst)
                 return -1
+        """
+        self.result = self.instructions(*list(self.dependencies.values()))
 
         # Flush dependencies
         for k in self.dependencies.keys():
