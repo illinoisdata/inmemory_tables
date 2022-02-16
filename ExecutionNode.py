@@ -123,6 +123,9 @@ class ExecutionNode(object):
         for k in self.dependencies.keys():
             self.dependencies[k] = None
 
+        if debug:
+            print("Node size:", self.size_function(self.result))
+
         # Record result size
         self.result_size_history.append(self.size_function(self.result))
         if len(self.result_size_history) > self.ROLLING_AVG_WINDOW_SIZE:

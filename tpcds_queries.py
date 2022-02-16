@@ -6,7 +6,7 @@ import numpy as np
 """
 A file containing select TPC-DS queries translated into equivalent polars
 dataframe operations.
-Available queries: 1, 2, 3, 5, 6
+Available queries: 1, 2, 3, 5, 6, 28, 33, 44, 54
 """
 def get_tpcds_query_nodes(query_num = 1):
     # Query 1----------------------------------------------------------------
@@ -371,4 +371,585 @@ def get_tpcds_query_nodes(query_num = 1):
         query6_nodes = [date_select, item_avg, result]
 
         return query6_nodes
+
+    # Query 28----------------------------------------------------------------
+    if query_num == 28:
+        
+        b1 = ExecutionNode("b1",
+            lambda: read_table("store_sales")
+                .filter(pl.col("ss_pricing_quantity").is_between(0, 5) &
+                        (pl.col("ss_pricing_list_price")
+                         .is_between(90, 100) |
+                         pl.col("ss_pricing_coupon_amt")
+                         .is_between(9000, 10000) |
+                         pl.col("ss_pricing_wholesale_cost")
+                         .is_between(30, 50)))
+                .select([pl.avg("ss_pricing_list_price").alias("b1_lp"),
+                         pl.count("ss_pricing_list_price").alias("b1_cnt"),
+                         pl.n_unique("ss_pricing_list_price")
+                         .alias("b1_cntd")]),
+            [])
+
+        b2 = ExecutionNode("b2",
+            lambda: read_table("store_sales")
+                .filter(pl.col("ss_pricing_quantity").is_between(6, 10) &
+                        (pl.col("ss_pricing_list_price")
+                         .is_between(90, 100) |
+                         pl.col("ss_pricing_coupon_amt")
+                         .is_between(9000, 10000) |
+                         pl.col("ss_pricing_wholesale_cost")
+                         .is_between(30, 50)))
+                .select([pl.avg("ss_pricing_list_price").alias("b2_lp"),
+                         pl.count("ss_pricing_list_price").alias("b2_cnt"),
+                         pl.n_unique("ss_pricing_list_price")
+                         .alias("b2_cntd")]),
+            [])
+
+        b3 = ExecutionNode("b3",
+            lambda: read_table("store_sales")
+                .filter(pl.col("ss_pricing_quantity").is_between(11, 15) &
+                        (pl.col("ss_pricing_list_price")
+                         .is_between(90, 100) |
+                         pl.col("ss_pricing_coupon_amt")
+                         .is_between(9000, 10000) |
+                         pl.col("ss_pricing_wholesale_cost")
+                         .is_between(30, 50)))
+                .select([pl.avg("ss_pricing_list_price").alias("b3_lp"),
+                         pl.count("ss_pricing_list_price").alias("b3_cnt"),
+                         pl.n_unique("ss_pricing_list_price")
+                         .alias("b3_cntd")]),
+            [])
+        
+        b4 = ExecutionNode("b4",
+            lambda: read_table("store_sales")
+                .filter(pl.col("ss_pricing_quantity").is_between(16, 20) &
+                        (pl.col("ss_pricing_list_price")
+                         .is_between(90, 100) |
+                         pl.col("ss_pricing_coupon_amt")
+                         .is_between(9000, 10000) |
+                         pl.col("ss_pricing_wholesale_cost")
+                         .is_between(30, 50)))
+                .select([pl.avg("ss_pricing_list_price").alias("b4_lp"),
+                         pl.count("ss_pricing_list_price").alias("b4_cnt"),
+                         pl.n_unique("ss_pricing_list_price")
+                         .alias("b4_cntd")]),
+            [])
+
+        b5 = ExecutionNode("b5",
+            lambda: read_table("store_sales")
+                .filter(pl.col("ss_pricing_quantity").is_between(21, 25) &
+                        (pl.col("ss_pricing_list_price")
+                         .is_between(90, 100) |
+                         pl.col("ss_pricing_coupon_amt")
+                         .is_between(9000, 10000) |
+                         pl.col("ss_pricing_wholesale_cost")
+                         .is_between(30, 50)))
+                .select([pl.avg("ss_pricing_list_price").alias("b5_lp"),
+                         pl.count("ss_pricing_list_price").alias("b5_cnt"),
+                         pl.n_unique("ss_pricing_list_price")
+                         .alias("b5_cntd")]),
+            [])
+
+        b6 = ExecutionNode("b6",
+            lambda: read_table("store_sales")
+                .filter(pl.col("ss_pricing_quantity").is_between(26, 30) &
+                        (pl.col("ss_pricing_list_price")
+                         .is_between(90, 100) |
+                         pl.col("ss_pricing_coupon_amt")
+                         .is_between(9000, 10000) |
+                         pl.col("ss_pricing_wholesale_cost")
+                         .is_between(30, 50)))
+                .select([pl.avg("ss_pricing_list_price").alias("b6_lp"),
+                         pl.count("ss_pricing_list_price").alias("b6_cnt"),
+                         pl.n_unique("ss_pricing_list_price")
+                         .alias("b6_cntd")]),
+            [])
+
+        result = ExecutionNode("result",
+            lambda b1, b2, b3, b4, b5, b6: b1.hstack(b2).hstack(b3).hstack(b4)
+                .hstack(b5).hstack(b6),
+            ["b1", "b2", "b3", "b4", "b5", "b6"])
+
+        query28_nodes = [b1, b2, b3, b4, b5, b6, result]
+
+        return query28_nodes
+
+    # Query 33----------------------------------------------------------------
+    if query_num == 33:
+        
+        category_ss = ExecutionNode("category_ss",
+            lambda: read_table("item")
+                .filter(pl.col("i_category")
+                        .is_in(["Books", "Home", "Electronics",
+                                "Jewelry", "Sports"]))
+                .select(pl.col("i_manufact_id")),
+            [])
+
+        category_cs = ExecutionNode("category_cs",
+            lambda: read_table("item")
+                .filter(pl.col("i_category")
+                        .is_in(["Books", "Home", "Electronics",
+                                "Jewelry", "Sports"]))
+                .select(pl.col("i_manufact_id")),
+            [])
+
+        category_ws = ExecutionNode("category_ws",
+            lambda: read_table("item")
+                .filter(pl.col("i_category")
+                        .is_in(["Books", "Home", "Electronics",
+                                "Jewelry", "Sports"]))
+                .select(pl.col("i_manufact_id")),
+            [])
+
+        ss = ExecutionNode("ss",
+            lambda category_ss: read_table("store_sales")
+                .join(read_table("item")
+                      .filter(pl.col("i_manufact_id")
+                              .is_in(list(category_ss
+                                     .select(pl.col("i_manufact_id"))))),
+                      left_on = "ss_sold_item_sk", right_on = "i_item_sk")
+                .join(read_table("date")
+                      .filter((pl.col("d_year") == 2000) &
+                              (pl.col("d_moy") == 7)),
+                      left_on = "ss_sold_date_sk",
+                      right_on = "d_date_sk")
+                .join(read_table("customer_address")
+                      .filter(pl.col("ca_address_gmt_offset") == -6),
+                      left_on = "ss_sold_addr_sk",
+                      right_on = "ca_address_sk")
+                .groupby("i_manufact_id")
+                .agg(pl.sum("ss_pricing_ext_sales_price").alias("total_sales"))
+                .select([pl.col("i_manufact_id"), pl.col("total_sales")]),
+            ["category_ss"])
+
+        cs = ExecutionNode("cs",
+            lambda category_cs: read_table("catalog_sales")
+                .join(read_table("item")
+                      .filter(pl.col("i_manufact_id")
+                              .is_in(list(category_cs
+                                     .select(pl.col("i_manufact_id"))))),
+                      left_on = "cs_sold_item_sk", right_on = "i_item_sk")
+                .join(read_table("date")
+                      .filter((pl.col("d_year") == 2000) &
+                              (pl.col("d_moy") == 7)),
+                      left_on = "cs_sold_date_sk",
+                      right_on = "d_date_sk")
+                .join(read_table("customer_address")
+                      .filter(pl.col("ca_address_gmt_offset") == -6),
+                      left_on = "cs_bill_addr_sk",
+                      right_on = "ca_address_sk")
+                .groupby("i_manufact_id")
+                .agg(pl.sum("cs_pricing_ext_sales_price").alias("total_sales"))
+                .select([pl.col("i_manufact_id"), pl.col("total_sales")]),
+            ["category_cs"])
+
+        ws = ExecutionNode("ws",
+            lambda category_ws: read_table("web_sales")
+                .join(read_table("item")
+                      .filter(pl.col("i_manufact_id")
+                              .is_in(list(category_ws
+                                     .select(pl.col("i_manufact_id"))))),
+                      left_on = "ws_item_sk", right_on = "i_item_sk")
+                .join(read_table("date")
+                      .filter((pl.col("d_year") == 2000) &
+                              (pl.col("d_moy") == 7)),
+                      left_on = "ws_sold_date_sk",
+                      right_on = "d_date_sk")
+                .join(read_table("customer_address")
+                      .filter(pl.col("ca_address_gmt_offset") == -6),
+                      left_on = "ws_bill_addr_sk",
+                      right_on = "ca_address_sk")
+                .groupby("i_manufact_id")
+                .agg(pl.sum("ws_pricing_ext_sales_price").alias("total_sales"))
+                .select([pl.col("i_manufact_id"), pl.col("total_sales")]),
+            ["category_ws"])
+
+        tmp1 = ExecutionNode("tmp1",
+            lambda ss, cs, ws: ss.vstack(cs).vstack(ws),
+            ["ss", "cs", "ws"])
+
+        result = ExecutionNode("result",
+            lambda tmp1: tmp1.groupby(pl.col("i_manufact_id"))
+                .agg(pl.sum("total_sales").alias("total_sales_sum"))
+                .select([pl.col("i_manufact_id"), pl.col("total_sales_sum")])
+                .sort("total_sales_sum"),
+            ["tmp1"])
+
+        query33_nodes = [category_ss, category_cs, category_ws, ss, cs, ws,
+                         tmp1, result]
+
+        return query33_nodes
+
+    # Query 44----------------------------------------------------------------
+    if query_num == 44:
+        
+        v1 = ExecutionNode("v1",
+            lambda: read_table("store_sales")
+                .filter(pl.col("ss_sold_store_sk") == 1 &
+                        pl.col("ss_sold_customer_sk").is_null())
+                .select(pl.avg("ss_pricing_net_profit").alias("rank_col")),
+            [])
+
+        v2 = ExecutionNode("v2",
+            lambda: read_table("store_sales")
+                .filter(pl.col("ss_sold_store_sk") == 1 &
+                        pl.col("ss_sold_customer_sk").is_null())
+                .select(pl.avg("ss_pricing_net_profit").alias("rank_col")),
+            [])
+
+        v11 = ExecutionNode("v11",
+            lambda avg1: read_table("store_sales")
+                .filter(pl.col("ss_sold_store_sk") == 1)
+                .groupby(pl.col("ss_sold_item_sk"))
+                .agg(pl.avg("ss_pricing_net_profit").alias("rank_col"))
+                .filter(pl.col("rank_col") > 0.9 * list(avg1
+                                     .select(pl.col("rank_col")))[0])
+                .select([pl.col("ss_sold_item_sk").alias("item_sk"),
+                         pl.col("rank_col")]),
+            ["v1"])
+
+        v21 = ExecutionNode("v21",
+            lambda avg1: read_table("store_sales")
+                .filter(pl.col("ss_sold_store_sk") == 1)
+                .groupby(pl.col("ss_sold_item_sk"))
+                .agg(pl.avg("ss_pricing_net_profit").alias("rank_col"))
+                .filter(pl.col("rank_col") > 0.9 * list(avg1
+                                     .select(pl.col("rank_col")))[0])
+                .select([pl.col("ss_sold_item_sk").alias("item_sk"),
+                         pl.col("rank_col")]),
+            ["v2"])
+
+        ascending = ExecutionNode("ascending",
+            lambda v1: v1
+                .select([pl.col("rank_col").rank(reverse = False).alias("rnk"),
+                         pl.col("item_sk")])
+                .filter(pl.col("rnk") < 11),
+            ["v11"])
+
+        descending = ExecutionNode("descending",
+            lambda v2: v2
+                .select([pl.col("rank_col").rank(reverse = True).alias("rnk"),
+                         pl.col("item_sk")])
+                .filter(pl.col("rnk") < 11),
+            ["v21"])
+
+        result = ExecutionNode("result",
+            lambda ascending, descending: ascending
+                .join(read_table("item"),
+                      left_on = "item_sk", right_on = "i_item_sk")
+                .select([pl.col("rnk"),
+                         pl.col("i_product_name").alias("best_performing")])
+                .join(descending
+                      .join(read_table("item"),
+                            left_on = "item_sk", right_on = "i_item_sk")
+                      .select([pl.col("rnk"),
+                               pl.col("i_product_name")
+                               .alias("worst_performing")]), on = "rnk")
+                .select([pl.col("rnk"), pl.col("best_performing"),
+                         pl.col("worst_performing")])
+                .sort("rnk"),
+            ["ascending", "descending"])
+
+
+        query44_nodes = [v1, v2, v11, v21, ascending, descending, result]
+
+        return query44_nodes
+
+    # Query 54----------------------------------------------------------------
+    if query_num == 54:
+        
+        cs_or_ws_sales = ExecutionNode("cs_or_ws_sales",
+            lambda: read_table("catalog_sales")
+                .select([pl.col("cs_sold_date_sk").alias("sold_date_sk"),
+                         pl.col("cs_bill_customer_sk").alias("customer_sk"),
+                         pl.col("cs_sold_item_sk").alias("item_sk")])
+                .vstack(read_table("web_sales")
+                        .select([pl.col("ws_sold_date_sk")
+                                 .alias("sold_date_sk"),
+                                 pl.col("ws_bill_customer_sk")
+                                 .alias("customer_sk"),
+                                 pl.col("ws_item_sk")
+                                 .alias("item_sk")])),
+            [])
+
+        my_customers = ExecutionNode("my_customers",
+            lambda cs_or_ws_sales: cs_or_ws_sales
+                .join(read_table("date")
+                      .filter((pl.col("d_year") == 2000) &
+                              (pl.col("d_moy") == 7)),
+                      left_on = "sold_date_sk", right_on = "d_date_sk")
+                .join(read_table("item"),
+                      left_on = "item_sk", right_on = "i_item_sk")
+                .join(read_table("customer"),
+                      left_on = "customer_sk", right_on = "c_customer_sk")
+                .select([pl.col("customer_sk").alias("c_customer_sk"),
+                         pl.col("c_current_addr_sk")])
+                .drop_duplicates(),
+            ["cs_or_ws_sales"])
+
+        seq1 = ExecutionNode("seq1",
+            lambda: read_table("date")
+                .filter((pl.col("d_year") == 2000) &
+                              (pl.col("d_moy") == 7))
+                .select(pl.col("d_month_seq").map(lambda x: x + 1))
+                .drop_duplicates(),
+            [])
+
+        seq2 = ExecutionNode("seq2",
+            lambda: read_table("date")
+                .filter((pl.col("d_year") == 2000) &
+                              (pl.col("d_moy") == 7))
+                .select(pl.col("d_month_seq").map(lambda x: x + 3))
+                .drop_duplicates(),
+            [])
+
+        my_revenue = ExecutionNode("my_revenue",
+            lambda my_customers, seq1, seq2: my_customers
+                .join(read_table("customer_address"),
+                      left_on = "c_current_addr_sk", right_on = "ca_address_sk")
+                .join(read_table("store_sales"),
+                      left_on = "c_customer_sk",
+                      right_on = "ss_sold_customer_sk")
+                .join(read_table("date")
+                      .filter(pl.col("d_month_seq").is_between(list(seq1
+                                     .select(pl.col("d_month_seq")))[0],
+                                                            list(seq2
+                                     .select(pl.col("d_month_seq")))[0])),
+                      left_on = "ss_sold_date_sk", right_on = "d_date_sk")
+                .groupby(pl.col("c_customer_sk"))
+                .agg(pl.sum("ss_pricing_ext_sales_price").alias("revenue"))
+                .select([pl.col("c_customer_sk"), pl.col("revenue")]),
+            ["my_customers", "seq1", "seq2"])
+
+        segments = ExecutionNode("segments",
+            lambda my_revenue: my_revenue
+                .select(pl.col("revenue").map(lambda x: x / 50)
+                        .alias("segment")),
+            ["my_revenue"])
+
+        result = ExecutionNode("result",
+            lambda segments: segments
+                .groupby(pl.col("segment"))
+                .agg(pl.count("segment").alias("num_customers"))
+                .select([pl.col("segment"),
+                         pl.col("num_customers"),
+                         pl.col("segment").map(lambda x: x * 50)
+                         .alias("segment_base")])
+                .sort(["segment", "num_customers"]),
+            ["segments"])
+
+
+        query54_nodes = [cs_or_ws_sales, my_customers, seq1, seq2, my_revenue,
+                         segments, result]
+
+        return query54_nodes
+
+    # Query 56----------------------------------------------------------------
+    if query_num == 56:
+        
+        category_ss = ExecutionNode("category_ss",
+            lambda: read_table("item")
+                .filter(pl.col("i_color")
+                        .is_in(["red", "violet", "pink"]))
+                .select(pl.col("i_item_id")),
+            [])
+
+        category_cs = ExecutionNode("category_cs",
+            lambda: read_table("item")
+                .filter(pl.col("i_color")
+                        .is_in(["red", "violet", "pink"]))
+                .select(pl.col("i_item_id")),
+            [])
+
+        category_ws = ExecutionNode("category_ws",
+            lambda: read_table("item")
+                .filter(pl.col("i_color")
+                        .is_in(["red", "violet", "pink"]))
+                .select(pl.col("i_item_id")),
+            [])
+
+        ss = ExecutionNode("ss",
+            lambda category_ss: read_table("store_sales")
+                .join(read_table("item")
+                      .filter(pl.col("i_item_id")
+                              .is_in(list(category_ss
+                                     .select(pl.col("i_item_id"))))),
+                      left_on = "ss_sold_item_sk", right_on = "i_item_sk")
+                .join(read_table("date")
+                      .filter((pl.col("d_year") == 2000) &
+                              (pl.col("d_moy") == 7)),
+                      left_on = "ss_sold_date_sk",
+                      right_on = "d_date_sk")
+                .join(read_table("customer_address")
+                      .filter(pl.col("ca_address_gmt_offset") == -6),
+                      left_on = "ss_sold_addr_sk",
+                      right_on = "ca_address_sk")
+                .groupby("i_item_id")
+                .agg(pl.sum("ss_pricing_ext_sales_price").alias("total_sales"))
+                .select([pl.col("i_item_id"), pl.col("total_sales")]),
+            ["category_ss"])
+
+        cs = ExecutionNode("cs",
+            lambda category_cs: read_table("catalog_sales")
+                .join(read_table("item")
+                      .filter(pl.col("i_item_id")
+                              .is_in(list(category_cs
+                                     .select(pl.col("i_item_id"))))),
+                      left_on = "cs_sold_item_sk", right_on = "i_item_sk")
+                .join(read_table("date")
+                      .filter((pl.col("d_year") == 2000) &
+                              (pl.col("d_moy") == 7)),
+                      left_on = "cs_sold_date_sk",
+                      right_on = "d_date_sk")
+                .join(read_table("customer_address")
+                      .filter(pl.col("ca_address_gmt_offset") == -6),
+                      left_on = "cs_bill_addr_sk",
+                      right_on = "ca_address_sk")
+                .groupby("i_item_id")
+                .agg(pl.sum("cs_pricing_ext_sales_price").alias("total_sales"))
+                .select([pl.col("i_item_id"), pl.col("total_sales")]),
+            ["category_cs"])
+
+        ws = ExecutionNode("ws",
+            lambda category_ws: read_table("web_sales")
+                .join(read_table("item")
+                      .filter(pl.col("i_item_id")
+                              .is_in(list(category_ws
+                                     .select(pl.col("i_item_id"))))),
+                      left_on = "ws_item_sk", right_on = "i_item_sk")
+                .join(read_table("date")
+                      .filter((pl.col("d_year") == 2000) &
+                              (pl.col("d_moy") == 7)),
+                      left_on = "ws_sold_date_sk",
+                      right_on = "d_date_sk")
+                .join(read_table("customer_address")
+                      .filter(pl.col("ca_address_gmt_offset") == -6),
+                      left_on = "ws_bill_addr_sk",
+                      right_on = "ca_address_sk")
+                .groupby("i_item_id")
+                .agg(pl.sum("ws_pricing_ext_sales_price").alias("total_sales"))
+                .select([pl.col("i_item_id"), pl.col("total_sales")]),
+            ["category_ws"])
+
+        tmp1 = ExecutionNode("tmp1",
+            lambda ss, cs, ws: ss.vstack(cs).vstack(ws),
+            ["ss", "cs", "ws"])
+
+        result = ExecutionNode("result",
+            lambda tmp1: tmp1.groupby(pl.col("i_item_id"))
+                .agg(pl.sum("total_sales").alias("total_sales_sum"))
+                .select([pl.col("i_item_id"), pl.col("total_sales_sum")])
+                .sort("total_sales_sum"),
+            ["tmp1"])
+
+        query56_nodes = [category_ss, category_cs, category_ws, ss, cs, ws,
+                         tmp1, result]
+
+        return query56_nodes
+
+    # Query 60----------------------------------------------------------------
+    if query_num == 60:
+        
+        category_ss = ExecutionNode("category_ss",
+            lambda: read_table("item")
+                .filter(pl.col("i_category")
+                        .is_in(["Children", "Men", "Music",
+                                "Jewelry", "Shoes"]))
+                .select(pl.col("i_manufact_id")),
+            [])
+
+        category_cs = ExecutionNode("category_cs",
+            lambda: read_table("item")
+                .filter(pl.col("i_category")
+                        .is_in(["Children", "Men", "Music",
+                                "Jewelry", "Shoes"]))
+                .select(pl.col("i_manufact_id")),
+            [])
+
+        category_ws = ExecutionNode("category_ws",
+            lambda: read_table("item")
+                .filter(pl.col("i_category")
+                        .is_in(["Children", "Men", "Music",
+                                "Jewelry", "Shoes"]))
+                .select(pl.col("i_manufact_id")),
+            [])
+
+        ss = ExecutionNode("ss",
+            lambda category_ss: read_table("store_sales")
+                .join(read_table("item")
+                      .filter(pl.col("i_manufact_id")
+                              .is_in(list(category_ss
+                                     .select(pl.col("i_manufact_id"))))),
+                      left_on = "ss_sold_item_sk", right_on = "i_item_sk")
+                .join(read_table("date")
+                      .filter((pl.col("d_year") == 2000) &
+                              (pl.col("d_moy") == 7)),
+                      left_on = "ss_sold_date_sk",
+                      right_on = "d_date_sk")
+                .join(read_table("customer_address")
+                      .filter(pl.col("ca_address_gmt_offset") == -6),
+                      left_on = "ss_sold_addr_sk",
+                      right_on = "ca_address_sk")
+                .groupby("i_manufact_id")
+                .agg(pl.sum("ss_pricing_ext_sales_price").alias("total_sales"))
+                .select([pl.col("i_manufact_id"), pl.col("total_sales")]),
+            ["category_ss"])
+
+        cs = ExecutionNode("cs",
+            lambda category_cs: read_table("catalog_sales")
+                .join(read_table("item")
+                      .filter(pl.col("i_manufact_id")
+                              .is_in(list(category_cs
+                                     .select(pl.col("i_manufact_id"))))),
+                      left_on = "cs_sold_item_sk", right_on = "i_item_sk")
+                .join(read_table("date")
+                      .filter((pl.col("d_year") == 2000) &
+                              (pl.col("d_moy") == 7)),
+                      left_on = "cs_sold_date_sk",
+                      right_on = "d_date_sk")
+                .join(read_table("customer_address")
+                      .filter(pl.col("ca_address_gmt_offset") == -6),
+                      left_on = "cs_bill_addr_sk",
+                      right_on = "ca_address_sk")
+                .groupby("i_manufact_id")
+                .agg(pl.sum("cs_pricing_ext_sales_price").alias("total_sales"))
+                .select([pl.col("i_manufact_id"), pl.col("total_sales")]),
+            ["category_cs"])
+
+        ws = ExecutionNode("ws",
+            lambda category_ws: read_table("web_sales")
+                .join(read_table("item")
+                      .filter(pl.col("i_manufact_id")
+                              .is_in(list(category_ws
+                                     .select(pl.col("i_manufact_id"))))),
+                      left_on = "ws_item_sk", right_on = "i_item_sk")
+                .join(read_table("date")
+                      .filter((pl.col("d_year") == 2000) &
+                              (pl.col("d_moy") == 7)),
+                      left_on = "ws_sold_date_sk",
+                      right_on = "d_date_sk")
+                .join(read_table("customer_address")
+                      .filter(pl.col("ca_address_gmt_offset") == -6),
+                      left_on = "ws_bill_addr_sk",
+                      right_on = "ca_address_sk")
+                .groupby("i_manufact_id")
+                .agg(pl.sum("ws_pricing_ext_sales_price").alias("total_sales"))
+                .select([pl.col("i_manufact_id"), pl.col("total_sales")]),
+            ["category_ws"])
+
+        tmp1 = ExecutionNode("tmp1",
+            lambda ss, cs, ws: ss.vstack(cs).vstack(ws),
+            ["ss", "cs", "ws"])
+
+        result = ExecutionNode("result",
+            lambda tmp1: tmp1.groupby(pl.col("i_manufact_id"))
+                .agg(pl.sum("total_sales").alias("total_sales_sum"))
+                .select([pl.col("i_manufact_id"), pl.col("total_sales_sum")])
+                .sort("total_sales_sum"),
+            ["tmp1"])
+
+        query60_nodes = [category_ss, category_cs, category_ws, ss, cs, ws,
+                         tmp1, result]
+
+        return query60_nodes
 

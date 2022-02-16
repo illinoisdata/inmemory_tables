@@ -18,7 +18,7 @@ import scipy.stats
 
 if __name__ == '__main__':   
     # Get node representation of a TPC-DS query 
-    execution_nodes = get_tpcds_query_nodes(query_num = 6)
+    execution_nodes = get_tpcds_query_nodes(query_num = 5)
 
     # Create graph & add nodes
     execution_graph = ExecutionGraph()
