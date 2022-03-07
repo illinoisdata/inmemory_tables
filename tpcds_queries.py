@@ -6,7 +6,7 @@ import numpy as np
 """
 A file containing select TPC-DS queries translated into equivalent polars
 dataframe operations.
-Available queries: 1, 2, 3, 5, 6, 28, 33, 44, 54
+Available queries: 1, 2, 3, 5, 6, 28, 33, 44, 54, 56, 60
 """
 def get_tpcds_query_nodes(query_num = 1):
     # Query 1----------------------------------------------------------------
@@ -953,3 +953,226 @@ def get_tpcds_query_nodes(query_num = 1):
 
         return query60_nodes
 
+    # Query 5 (Old)----------------------------------------------------------------
+    if query_num == 999:
+        store_sales = ExecutionNode("store_sales",
+                                    lambda: read_table("store_sales"), [])
+        store_returns = ExecutionNode("store_returns",
+                                      lambda: read_table("store_returns"), [])
+        catalog_sales = ExecutionNode("catalog_sales",
+                                      lambda: read_table("catalog_sales"), [])
+        catalog_returns = ExecutionNode("catalog_returns",
+                                    lambda: read_table("catalog_returns"), [])
+        web_sales = ExecutionNode("web_sales",
+                                  lambda: read_table("web_sales"), [])
+        web_returns = ExecutionNode("web_returns",
+                                    lambda: read_table("web_returns"), [])
+
+        date = ExecutionNode("date", lambda: read_table("date"), [])
+        store = ExecutionNode("store", lambda: read_table("store"), [])
+        catalog_page = ExecutionNode("catalog_page",
+                                     lambda: read_table("catalog_page"), [])
+        web_site = ExecutionNode("web_site", lambda: read_table("web_site"), [])
+
+        sr_select = ExecutionNode("sr_select",
+            lambda sr: sr.select([pl.col("sr_store_sk").alias("store_sk"),
+                pl.col("sr_returned_date_sk").alias("date_sk"),
+                (pl.col("sr_pricing_reversed_charge") * 0.0)
+                                  .alias("sales_price"),
+                (pl.col("sr_pricing_reversed_charge") * 0.0).alias("profit"),
+                pl.col("sr_pricing_reversed_charge").alias("return_amt"),
+                pl.col("sr_pricing_net_loss").alias("net_loss")]),
+            ["store_returns"])
+
+        ss_select = ExecutionNode("ss_select",
+            lambda ss: ss.select([pl.col("ss_sold_store_sk").alias("store_sk"),
+                pl.col("ss_sold_date_sk").alias("date_sk"),
+                pl.col("ss_pricing_ext_sales_price").alias("sales_price"),
+                pl.col("ss_pricing_net_profit").alias("profit"),
+                (pl.col("ss_pricing_ext_sales_price") * 0.0)
+                                  .alias("return_amt"),
+                (pl.col("ss_pricing_ext_sales_price") * 0.0)
+                                  .alias("net_loss")]),
+            ["store_sales"])
+
+        cr_select = ExecutionNode("cr_select",
+            lambda sr: sr.select([pl.col("cr_catalog_page_sk").alias("page_sk"),
+                pl.col("cr_returned_date_sk").alias("date_sk"),
+                (pl.col("cr_pricing_reversed_charge") * 0.0)
+                                  .alias("sales_price"),
+                (pl.col("cr_pricing_reversed_charge") * 0.0).alias("profit"),
+                pl.col("cr_pricing_reversed_charge").alias("return_amt"),
+                pl.col("cr_pricing_net_loss").alias("net_loss")]),
+            ["catalog_returns"])
+
+        cs_select = ExecutionNode("cs_select",
+            lambda cs: cs.select([pl.col("cs_catalog_page_sk").alias("page_sk"),
+                pl.col("cs_sold_date_sk").alias("date_sk"),
+                pl.col("cs_pricing_ext_sales_price").alias("sales_price"),
+                pl.col("cs_pricing_net_profit").alias("profit"),
+                (pl.col("cs_pricing_ext_sales_price") * 0.0)
+                                  .alias("return_amt"),
+                (pl.col("cs_pricing_ext_sales_price") * 0.0)
+                                  .alias("net_loss")]),
+            ["catalog_sales"])
+
+        ws_select = ExecutionNode("ws_select",
+            lambda cs: cs.select([pl.col("ws_web_site_sk")
+                                  .alias("wsr_web_site_sk"),
+                pl.col("ws_sold_date_sk").alias("date_sk"),
+                pl.col("ws_pricing_ext_sales_price").alias("sales_price"),
+                pl.col("ws_pricing_net_profit").alias("profit"),
+                (pl.col("ws_pricing_ext_sales_price") * 0.0)
+                                  .alias("return_amt"),
+                (pl.col("ws_pricing_ext_sales_price") * 0.0)
+                                  .alias("net_loss")]),
+            ["web_sales"])
+
+        wsr2 = ExecutionNode("wsr2",
+            lambda web_returns, web_sales: web_returns
+                .join(web_sales, left_on = ["wr_item_sk", "wr_order_number"],
+                      right_on = ["ws_item_sk", "ws_order_number"],
+                      how = "left"),
+            ["web_returns", "web_sales"])
+
+        wsr2_select = ExecutionNode("wsr2_select",
+            lambda sr: sr.select([pl.col("ws_web_site_sk")
+                                  .alias("wsr_web_site_sk"),
+                pl.col("wr_returned_date_sk").alias("date_sk"),
+                (pl.col("wr_pricing_reversed_charge") * 0.0)
+                                  .alias("sales_price"),
+                (pl.col("wr_pricing_reversed_charge") * 0.0).alias("profit"),
+                pl.col("wr_pricing_reversed_charge").alias("return_amt"),
+                pl.col("wr_pricing_net_loss").alias("net_loss")]),
+            ["wsr2"])
+
+        salesreturns1 = ExecutionNode("salesreturns1",
+            lambda ss_select, sr_select: ss_select.vstack(sr_select),
+            ["ss_select", "sr_select"])
+
+        salesreturns2 = ExecutionNode("salesreturns2",
+            lambda cs_select, cr_select: cs_select.vstack(cr_select),
+            ["cs_select", "cr_select"])
+
+        salesreturns3 = ExecutionNode("salesreturns3",
+            lambda ws_select, wsr_select: ws_select.vstack(wsr_select),
+            ["ws_select", "wsr2_select"])
+
+        date_select = ExecutionNode("date_select",
+            lambda date: date.filter(pl.col("d_month_seq") == 1205),
+            ["date"])
+
+        date_sr1_join = ExecutionNode("date_sr1_join",
+            lambda date_select, salesreturns1: date_select
+                .join(salesreturns1, left_on = "d_date_sk",
+                      right_on = "date_sk"),
+            ["date_select", "salesreturns1"])
+
+        date_sr2_join = ExecutionNode("date_sr2_join",
+            lambda date_select, salesreturns2: date_select
+                .join(salesreturns2, left_on = "d_date_sk",
+                      right_on = "date_sk"),
+            ["date_select", "salesreturns2"])
+
+        date_sr3_join = ExecutionNode("date_sr3_join",
+            lambda date_select, salesreturns3: date_select
+                .join(salesreturns3, left_on = "d_date_sk",
+                      right_on = "date_sk"),
+            ["date_select", "salesreturns3"])
+
+        ssr = ExecutionNode("ssr",
+            lambda date_sr1_join, store: date_sr1_join
+                .join(store, left_on = "store_sk", right_on = "w_store_sk"),
+            ["date_sr1_join", "store"])
+
+        csr = ExecutionNode("csr",
+            lambda date_sr2_join, catalog_page: date_sr2_join
+                .join(catalog_page, left_on = "page_sk",
+                      right_on = "cp_catalog_page_sk"),
+            ["date_sr2_join", "catalog_page"])
+
+        wsr = ExecutionNode("wsr",
+            lambda date_sr3_join, web_site: date_sr3_join
+                .join(web_site, left_on = "wsr_web_site_sk",
+                      right_on = "web_site_sk"),
+            ["date_sr3_join", "web_site"])
+
+        ssr_groupby = ExecutionNode("ssr_groupby",
+            lambda ssr: ssr.groupby("w_store_id")
+                .agg([pl.sum("sales_price").alias("sales"),
+                      pl.sum("profit").alias("profit"),
+                      pl.sum("return_amt").alias("returns"),
+                      pl.sum("net_loss").alias("profit_loss")]),
+            ["ssr"])
+
+        csr_groupby = ExecutionNode("csr_groupby",
+            lambda csr: csr.groupby("cp_catalog_page_id")
+                .agg([pl.sum("sales_price").alias("sales"),
+                      pl.sum("profit").alias("profit"),
+                      pl.sum("return_amt").alias("returns"),
+                      pl.sum("net_loss").alias("profit_loss")]),
+            ["csr"])
+
+        wsr_groupby = ExecutionNode("wsr_groupby",
+            lambda wsr: wsr.groupby("web_site_id")
+                .agg([pl.sum("sales_price").alias("sales"),
+                      pl.sum("profit").alias("profit"),
+                      pl.sum("return_amt").alias("returns"),
+                      pl.sum("net_loss").alias("profit_loss")]),
+            ["wsr"])
+
+        ssr_select = ExecutionNode("ssr_select",
+            lambda ssr_groupby: ssr_groupby
+                .select([pl.col("w_store_id").alias("id"),
+                         pl.col("sales"), pl.col("returns"),
+                         (pl.col("profit") - pl.col("profit_loss"))
+                         .alias("profit")]),
+            ["ssr_groupby"])
+
+        csr_select = ExecutionNode("csr_select",
+            lambda csr_groupby: csr_groupby
+                .select([pl.col("cp_catalog_page_id").alias("id"),
+                         pl.col("sales"), pl.col("returns"),
+                         (pl.col("profit") - pl.col("profit_loss"))
+                         .alias("profit")]),
+            ["csr_groupby"])
+
+        wsr_select = ExecutionNode("wsr_select",
+            lambda wsr_groupby: wsr_groupby
+                .select([pl.col("web_site_id").alias("id"),
+                         pl.col("sales"), pl.col("returns"),
+                         (pl.col("profit") - pl.col("profit_loss"))
+                         .alias("profit")]),
+            ["wsr_groupby"])
+
+        result_union = ExecutionNode("result_union",
+            lambda ssr_select, csr_select, wsr_select: ssr_select
+                                     .vstack(csr_select).vstack(wsr_select),
+            ["ssr_select", "csr_select", "wsr_select"])
+
+        result_groupby = ExecutionNode("result_groupby",
+            lambda result_union: result_union.groupby("id")
+                .agg([pl.sum("sales").alias("sales"),
+                      pl.sum("returns").alias("returns"),
+                      pl.sum("profit").alias("profit")]),
+            ["result_union"])
+
+        result_order = ExecutionNode("result_order",
+            lambda result_groupby: result_groupby.sort("id"),
+            ["result_groupby"])
+
+        result = ExecutionNode("result",
+            lambda result_order: result_order.limit(10),
+            ["result_order"])
+
+        query5_nodes = [store_sales, store_returns, catalog_sales,
+                        catalog_returns, web_sales, web_returns, sr_select,
+                        ss_select, cr_select, cs_select, wsr2, ws_select,
+                        wsr2_select, salesreturns1, salesreturns2,
+                        salesreturns3, date, date_select, date_sr1_join,
+                        date_sr2_join, date_sr3_join, store, catalog_page,
+                        web_site, ssr, csr, wsr, ssr_groupby, csr_groupby,
+                        wsr_groupby, ssr_select, csr_select, wsr_select,
+                        result_union, result_groupby, result_order, result]
+
+        return query5_nodes

@@ -80,6 +80,7 @@ class ExecutionGraph(object):
     in-memory storage in parallel before garage collecting them.
     """
     def execute(self, debug = False, save_inmemory_tables = False):
+        print("store in memory:", self.store_in_memory, len(self.store_in_memory))
         # Reset counters
         self.peak_memory_usage_counter = 0
         self.serialize_time_counter = 0
@@ -163,11 +164,10 @@ class ExecutionGraph(object):
             for node in self.node_dict.values()])
 
         # Print metadata
-        if debug:
-            print("total execution time:", self.execution_time_counter)
-            print("total deserialize time:", self.time_to_deserialize_counter)
-            print("total serialize time:", self.time_to_serialize_counter)
-            print("maximum memory usage:", self.peak_memory_usage_counter)
+        print("total execution time:", self.execution_time_counter)
+        print("total deserialize time:", self.time_to_deserialize_counter)
+        print("total serialize time:", self.time_to_serialize_counter)
+        print("maximum memory usage:", self.peak_memory_usage_counter)
 
         # Join multithreaded writer
         if save_inmemory_tables:

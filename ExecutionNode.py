@@ -1,5 +1,6 @@
 import time
 from utils import *
+from TableReader import *
 
 class ExecutionNode(object):
 
@@ -20,6 +21,7 @@ class ExecutionNode(object):
         provided, use default unpickle function in utils.
     """
     def __init__(self, name, instructions, dependencies,
+                 tablereader = None,
                  size_function = None,
                  serialize_function = None,
                  deserialize_function = None):
@@ -28,6 +30,8 @@ class ExecutionNode(object):
         self.instructions = instructions
         self.dependencies = {dependency: None for dependency in dependencies}
         self.result = None
+
+        self.tablereader = tablereader
 
         if size_function:
             self.size_function = size_function
@@ -148,6 +152,8 @@ class ExecutionNode(object):
         if len(self.time_to_serialize_history) > self.ROLLING_AVG_WINDOW_SIZE:
             self.time_to_serialize_history.pop(0)
 
+        #print("serialized", self.name, ", time taken:", time_to_serialize)
+
     """
     Deserializes and returns current result from disk.
     """
@@ -160,5 +166,7 @@ class ExecutionNode(object):
         self.time_to_deserialize_history.append(time_to_deserialize)
         if len(self.time_to_deserialize_history) > self.ROLLING_AVG_WINDOW_SIZE:
             self.time_to_deserialize_history.pop(0)
+
+        #print("deserialized", self.name, ", time taken:", time_to_deserialize)
 
         return result_from_disk

@@ -1,6 +1,7 @@
 import networkx as nx
 import random
 import math
+import numpy as np
 from ExecutionGraph import *
 from utils import *
 
@@ -133,3 +134,152 @@ def simulated_annealing(graph, node_sizes, store_in_memory, memory_limit,
         print("Peak memory usage:", new_peak_memory_usage)
         
     return best_order, new_peak_memory_usage
+
+def recursive_min_cut(graph, node_sizes, store_in_memory, debug = False):
+    # Compute the actual memory usage of nodes based on its size and whether
+    # it is stored in memory or not (i.e. if its not, then the usage is 0)
+    memory_usage = {name: int(name in store_in_memory) * node_sizes[name]
+                    for name in graph.nodes}
+
+    max_capacity = sum(memory_usage.values())
+
+    # Augment graph
+    new_graph = nx.DiGraph()
+    
+    for node in graph.nodes():
+        new_graph.add_node(node)
+        new_graph.add_node(node + "_done")
+        new_graph.add_edge(node, node + "_done", capacity = memory_usage[node])
+
+    for edge in graph.edges():
+        new_graph.add_edge(edge[0], edge[1], capacity = 0)
+        new_graph.add_edge(edge[1], edge[0] + "_done", capacity = 0)
+
+    raw_execution_order = recursive_min_cut_helper(new_graph, memory_usage,
+                                               max_capacity, debug = True)
+
+    # Clean execution order
+    execution_order = []
+    for name in raw_execution_order:
+        if name in graph.nodes():
+            execution_order.append(name)
+
+    print(execution_order)
+
+    # Compute peak memory usage
+    new_peak_memory_usage = compute_peak_memory_usage(
+                graph, execution_order, node_sizes, store_in_memory)
+
+    if debug:
+        print("Peak memory usage:", new_peak_memory_usage)
+
+    return execution_order, new_peak_memory_usage
+
+def recursive_min_cut_helper(new_graph, memory_usage, max_capacity,
+                             debug = False):
+    if debug:
+        #print(new_graph.edges())
+        pass
+        
+    # Base case
+    if new_graph.number_of_nodes() == 1 or new_graph.number_of_edges() == 0:
+        return list(new_graph.nodes())
+    
+    # Add aggregate source/sink
+    sources = []
+    sinks = []
+    
+    for node in new_graph.nodes():
+        if len(list(new_graph.predecessors(node))) == 0:
+            sources.append(node)  
+        if len(list(new_graph.successors(node))) == 0:
+            sinks.append(node)
+
+    new_graph.add_node("source")
+    new_graph.add_node("sink")
+
+    for node in sources:
+        new_graph.add_edge("source", node, capacity = max_capacity + 1)
+    for node in sinks:
+        new_graph.add_edge(node, "sink", capacity = max_capacity + 1)
+
+    cut_value, partition = nx.minimum_cut(new_graph, "source", "sink")
+
+    while True:
+        changed = False
+        for edge in new_graph.edges:
+            if edge[1] in partition[0] and edge[0] in partition[1]:
+                partition[0].remove(edge[1])
+                partition[1].add(edge[1])
+                changed = True
+                
+        if not changed:
+            break
+    
+    if debug:
+        print(cut_value)
+        #print("partition 0:", new_graph.subgraph(partition[0]).nodes())
+        #print("partition 1:", new_graph.subgraph(partition[1]).nodes())
+        pass
+
+    partition_0 = nx.DiGraph(new_graph.subgraph(partition[0]))
+    partition_1 = nx.DiGraph(new_graph.subgraph(partition[1]))
+
+    partition_0.remove_node("source")
+    partition_1.remove_node("sink")
+
+    source_half = recursive_min_cut_helper(partition_0,
+                                           memory_usage, max_capacity, debug)
+    sink_half = recursive_min_cut_helper(partition_1,
+                                         memory_usage, max_capacity, debug)
+
+    return source_half + sink_half    
+
+
+def recursive_min_cut2(graph, node_sizes, store_in_memory, debug = False):
+    # Compute the actual memory usage of nodes based on its size and whether
+    # it is stored in memory or not (i.e. if its not, then the usage is 0)
+    memory_usage = {name: int(name in store_in_memory) * node_sizes[name]
+                    for name in graph.nodes}
+
+    raw_execution_order = recursive_min_cut_helper2(graph, memory_usage,
+                                               max_capacity, debug)
+
+    new_graph = nx.DiGraph(graph)
+
+    # Compute peak memory usage
+    new_peak_memory_usage = compute_peak_memory_usage(
+                new_graph, execution_order, node_sizes, store_in_memory)
+
+    if debug:
+        print("Peak memory usage:", new_peak_memory_usage)
+
+    return execution_order, new_peak_memory_usage
+
+def recursive_min_cut_helper2(new_graph, memory_usage, max_capacity,
+                             debug = False):
+    if debug:
+        #print(new_graph.edges())
+        pass
+        
+    # Base case
+    if new_graph.number_of_nodes() == 1:
+        return list(new_graph.nodes())
+    
+    sep, part1, part2 = nxmetis.vertex_separator(new_graph,
+                                                 weight = memory_usage)
+    if debug:
+        print(cut_value)
+        #print("partition 0:", new_graph.subgraph(partition[0]).nodes())
+        #print("partition 1:", new_graph.subgraph(partition[1]).nodes())
+        pass
+
+    partition_0 = nx.DiGraph(new_graph.subgraph(part1 + sep))
+    partition_1 = nx.DiGraph(new_graph.subgraph(part2))
+
+    source_half = recursive_min_cut_helper2(partition_0,
+                                           memory_usage, max_capacity, debug)
+    sink_half = recursive_min_cut_helper2(partition_1,
+                                         memory_usage, max_capacity, debug)
+
+    return source_half + sink_half    

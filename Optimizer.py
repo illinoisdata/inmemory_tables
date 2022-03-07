@@ -95,20 +95,36 @@ class Optimizer(object):
                 n_iters = sa_iters, debug = debug)
 
         if method == "dfs":
-            return self.dfs_topological(
+            return dfs_topological(
                 graph = self.execution_graph.graph,
                 node_sizes = self.node_sizes,
                 store_in_memory = self.execution_graph.store_in_memory,
                 debug = debug)
 
         if method == "sa":
-            return self.simulated_annealing(graph = self.execution_graph.graph,
+            return simulated_annealing(graph = self.execution_graph.graph,
                 node_sizes = self.node_sizes,
                 store_in_memory = self.execution_graph.store_in_memory,
                 memory_limit = self.memory_limit,
                 new_execution_order = \
                     copy.deepcopy(self.execution_graph.execution_order),
                 n_iters = sa_iters, debug = debug)
+
+        if method == "recursive_min_cut":
+            return recursive_min_cut(
+                graph = self.execution_graph.graph,
+                node_sizes = self.node_sizes,
+                store_in_memory = self.execution_graph.store_in_memory,
+                debug = debug)
+
+        if method == "recursive_min_cut2":
+            return recursive_min_cut2(
+                graph = self.execution_graph.graph,
+                node_sizes = self.node_sizes,
+                store_in_memory = self.execution_graph.store_in_memory,
+                debug = debug)
+
+
 
         # no valid choice made
         return self.execution_graph.execution_order, self.memory_limit

@@ -1,32 +1,8 @@
 import io
 import polars as pl
 import networkx as nx
-import pickle
 import time
 from collections import defaultdict
-
-import psutil
-
-"""
-Reads a TPC-DS table into a polars dataframe.
-"""
-def read_table(table_name):
-    # test database
-    column_dict = defaultdict(list)
-    column_file = open("tpcds/column_list.txt")
-    for line in column_file.readlines():
-        if line[0].isalpha():
-            col_table = line.split()
-            table = col_table[1].lower()
-            col = col_table[0].lower()
-            column_dict[col_table[1].lower()].append(col_table[0].lower())
-            
-    f = open("tpcds/" + table_name + ".dat", "r", encoding = "utf-8",
-             errors = 'replace')
-    df_str = f.read()
-    column_count = df_str.split('\n')[0].count('|')
-    return pl.read_csv(io.StringIO(df_str), has_header = False, sep = '|',
-                       new_columns = column_dict[table_name][:column_count])
 
 """
 Default size function for ExecutionNode if none is provided.
