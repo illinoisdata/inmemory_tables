@@ -3,7 +3,6 @@ from utils import *
 from ExecutionNode import *
 from ExecutionGraph import *
 from Optimizer import *
-from tpcds_queries_new import *
 import polars as pl
 import argparse
 
