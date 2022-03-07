@@ -1,7 +1,7 @@
 from ExecutionNode import *
 from ExecutionGraph import *
 from Optimizer import *
-from tpcds_queries_new import *
+from tpcds_queries import *
 import polars as pl
 import argparse
 
@@ -12,8 +12,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     # Get node representation of a TPC-DS query 
-    # execution_nodes = get_tpcds_query_nodes(query_num = int(args.query))
-    execution_nodes, tablereader = get_tpcds_query_nodes(job_num = 2)
+    execution_nodes, tablereader = get_tpcds_query_nodes(
+        job_num = int(args.query))
+    # execution_nodes, tablereader = get_tpcds_query_nodes(job_num = 2)
 
     # Create graph & add nodes
     execution_graph = ExecutionGraph()
@@ -28,8 +29,8 @@ if __name__ == '__main__':
     
     # Create optimizer to jointly optimize nodes to store in memory & execution
     # order
-    # optimizer = Optimizer(execution_graph, memory_limit = int(args.memory))
-    optimizer = Optimizer(execution_graph, memory_limit = 2000000000)
+    optimizer = Optimizer(execution_graph, memory_limit = int(args.memory))
+    # optimizer = Optimizer(execution_graph, memory_limit = 2000000000)
     optimizer.optimize(execution_order_method = "both",
                        debug = True)
 
