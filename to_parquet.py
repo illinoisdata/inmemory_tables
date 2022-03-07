@@ -29,8 +29,8 @@ def read_table(table_name, column_dict):
                        new_columns = column_dict[table_name][:column_count])
 
 if __name__ == '__main__':
-    column_dict = read_columns
+    column_dict = read_columns()
     
     for column in column_dict.keys():
-        table = read_table(column)
+        table = read_table(column, column_dict)
         parquet_result(table, column, location = 'tpcds/')
