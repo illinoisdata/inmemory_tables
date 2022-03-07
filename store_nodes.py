@@ -276,14 +276,16 @@ def mkp(graph, execution_order, node_scores, node_sizes, nodes_to_exclude,
         if solver.BestSolutionContains(i):
             new_store_in_memory.add(vector_nodes[i])
 
+    new_time_save = time_save / multiplier
+
     # Add nodes not in any valid maximal set due to all member maximal sets
     # which it is a part of being under the size limit.
     for name in graph.nodes:
         if name not in vector_nodes and name not in nodes_to_exclude:
             new_store_in_memory.add(name)
+            new_time_save += node_scores[name]
 
     # Compute time save & peak memory usage
-    new_time_save = time_save / multiplier
     new_peak_memory_usage = compute_peak_memory_usage(
             graph, execution_order, node_sizes, new_store_in_memory)
 
