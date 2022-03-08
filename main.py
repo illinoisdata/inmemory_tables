@@ -4,6 +4,8 @@ from Optimizer import *
 from tpcds_queries import *
 import polars as pl
 import argparse
+import glob
+import os
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -26,6 +28,10 @@ if __name__ == '__main__':
 
     tablereader.report()
     tablereader.clear()
+
+    files = glob.glob('disk/*')
+    for f in files:
+        os.remove(f)
     
     # Create optimizer to jointly optimize nodes to store in memory & execution
     # order
@@ -42,3 +48,7 @@ if __name__ == '__main__':
     #                  set(execution_graph.graph.nodes()), debug = True)
 
     tablereader.report()
+
+    files = glob.glob('disk/*')
+    for f in files:
+        os.remove(f)
