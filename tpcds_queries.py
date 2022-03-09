@@ -641,17 +641,37 @@ def get_tpcds_query_nodes(job_num = 1):
                 .sort("total_sales_sum"),
             ["tmp_q60"], tablereader)
 
-        ss_q61 = ExecutionNode("ss_q61",
-            lambda ss, category_q61: ss
-                .filter(pl.col("i_manufact_id")
+        def temp(ss, category_q61):
+            temp1 = ss \
+                .filter(pl.col("i_manufact_id") \
                         .is_in(category_q61["i_manufact_id"].to_list()))
-                .join(tablereader.read_table("store")
-                      .filter(pl.col("w_store_address_gmt_offset") == -5),
-                      left_on = "ss_sold_store_sk",
+
+            print(temp1)
+            
+            temp2 = temp1.join(tablereader.read_table("store") \
+                      .filter(pl.col("w_store_address_gmt_offset") == -5), \
+                      left_on = "ss_sold_store_sk", \
                       right_on = "w_store_sk")
-                .join(tablereader.read_table("customer"),
-                      left_on = "ss_sold_customer_sk",
-                      right_on = "c_customer_sk"),
+
+            print(temp2)
+            temp3 = temp2.join(tablereader.read_table("customer"), \
+                      left_on = "ss_sold_customer_sk", \
+                      right_on = "c_customer_sk")
+
+            print(temp3)
+            return temp3
+
+        ss_q61 = ExecutionNode("ss_q61",temp, 
+            #lambda ss, category_q61: ss
+                #.filter(pl.col("i_manufact_id")
+                #        .is_in(category_q61["i_manufact_id"].to_list()))
+                #.join(tablereader.read_table("store")
+                #      .filter(pl.col("w_store_address_gmt_offset") == -5),
+                #      left_on = "ss_sold_store_sk",
+                #      right_on = "w_store_sk")
+                #.join(tablereader.read_table("customer"),
+                #      left_on = "ss_sold_customer_sk",
+                #      right_on = "c_customer_sk"),
             ["ss", "category_q61"], tablereader)
 
         promotions = ExecutionNode("promotions",
