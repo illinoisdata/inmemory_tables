@@ -647,9 +647,13 @@ def get_tpcds_query_nodes(job_num = 1):
                         .is_in(category_q61["i_manufact_id"].to_list()))
 
             print(temp1)
+
+            temp4 = tablereader.read_table("store") \
+                      .filter(pl.col("w_store_address_gmt_offset") == -5)
+
+            print(temp4)
             
-            temp2 = temp1.join(tablereader.read_table("store") \
-                      .filter(pl.col("w_store_address_gmt_offset") == -5), \
+            temp2 = temp1.join(temp4, \
                       left_on = "ss_sold_store_sk", \
                       right_on = "w_store_sk")
 
