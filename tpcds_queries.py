@@ -190,7 +190,7 @@ def get_tpcds_query_nodes(job_num = 1):
             ["salesreturns3"], tablereader)
 
         scw_stack = ExecutionNode("scw_stack",
-            lambda ssr, csr, wsr: pl.unique(ssr.vstack(csr).vstack(wsr).distinct(),
+            lambda ssr, csr, wsr: ssr.vstack(csr).vstack(wsr).distinct(),
             ["ssr", "csr", "wsr"], tablereader)
 
         query5_result = ExecutionNode("query5_result",
