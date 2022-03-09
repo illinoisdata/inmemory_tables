@@ -415,7 +415,7 @@ def get_tpcds_query_nodes(job_num = 1):
             [], tablereader)
 
         x2 = ExecutionNode("x2",
-            lambda ssr2, csr2, wsr2: ssr2.vstack(csr2).vstack(wsr2)).distinct(),
+            lambda ssr2, csr2, wsr2: ssr2.vstack(csr2).vstack(wsr2).distinct(),
             ["ssr2", "csr2", "wsr2"], tablereader)
 
         query80_result = ExecutionNode("query80_result",
