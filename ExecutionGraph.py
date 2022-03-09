@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import threading
 import queue
 from ExecutionNode import *
+from collections import Counter
 
 class ExecutionGraph(object):
 

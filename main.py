@@ -6,6 +6,7 @@ import polars as pl
 import argparse
 import glob
 import os
+from collections import Counter
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -25,7 +26,7 @@ if __name__ == '__main__':
     execution_graph.build_graph(draw_graph = False)
 
     # Dry run; store no nodes in memory
-    execution_graph.execute(debug = True)
+    execution_graph.execute(debug = False)
 
     tablereader.report()
     tablereader.clear()
