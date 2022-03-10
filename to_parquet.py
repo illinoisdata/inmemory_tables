@@ -6,6 +6,7 @@ from Optimizer import *
 import polars as pl
 import argparse
 
+# Script for converting TPC-DS tables from .dat files to parquet.
 def read_columns():
     column_dict = defaultdict(list)
     column_file = open("tpcds/column_list.txt")
