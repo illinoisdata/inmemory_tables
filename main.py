@@ -10,13 +10,13 @@ from collections import Counter
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("-Q", "--query", help="TPC-DS query number")
+    parser.add_argument("-Q", "--job", help="TPC-DS job number")
     parser.add_argument("-M", "--memory", help="Memory container size")
     args = parser.parse_args()
     
     # Get node representation of a TPC-DS query 
     execution_nodes, tablereader = get_tpcds_query_nodes(
-        job_num = int(args.query))
+        job_num = int(args.job))
 
     print("number of nodes:", len(execution_nodes))
 
@@ -42,7 +42,7 @@ if __name__ == '__main__':
     optimizer.optimize(execution_order_method = "both", debug = True)
 
     # Evaluate efficiency after optimization
-    execution_graph.execute(debug = False, save_inmemory_tables = True)
+    execution_graph.execute(debug = False, save_inmemory_tables = False)
 
     tablereader.report()
 

@@ -692,19 +692,19 @@ def get_tpcds_query_nodes(job_num = 1):
 
         # Query 2
         stack = ExecutionNode("stack",
-            lambda: tablereader.read_table("store_sales")
+            lambda ss_base, cs_base, ws_base: ss_base
                 .select([pl.col("ss_sold_date_sk").alias("sold_date_sk"),
                          pl.col("ss_pricing_sales_price").
                          alias("sales_price"),
                          pl.col("ss_sold_store_sk").alias("store_sk")])
-                .vstack(tablereader.read_table("catalog_sales")
+                .vstack(cs_base
                         .select([pl.col("cs_sold_date_sk")
                                  .alias("sold_date_sk"),
                                  pl.col("cs_pricing_ext_sales_price")
                                  .alias("sales_price"),
                                  pl.lit(-1).cast(pl.datatypes.Int64)
                                  .alias("store_sk")]))
-                .vstack(tablereader.read_table("web_sales")
+                .vstack(ws_base
                         .select([pl.col("ws_sold_date_sk")
                                  .alias("sold_date_sk"),
                                  pl.col("ws_pricing_ext_sales_price")
@@ -713,7 +713,7 @@ def get_tpcds_query_nodes(job_num = 1):
                                  .alias("store_sk")]))
                 .select([pl.col("sold_date_sk"), pl.col("sales_price"),
                          pl.col("store_sk")]),
-            [], tablereader)
+            ["ss_base", "cs_base", "ws_base"], tablereader)
 
         wswscs = ExecutionNode("wswscs",
             lambda stack: stack.filter(pl.col("store_sk") == -1).distinct()
@@ -907,7 +907,9 @@ def get_tpcds_query_nodes(job_num = 1):
                          pl.col("ss_pricing_quantity"),
                          pl.col("ss_pricing_net_paid"),
                          pl.col("ss_pricing_ext_sales_price"),
-                         pl.col("ss_sold_customer_sk")]),
+                         pl.col("ss_sold_customer_sk"),
+                         pl.col("ss_pricing_sales_price"),
+                         pl.col("ss_sold_store_sk")]),
             [], tablereader)
 
         ws_base = ExecutionNode("ws_base",
@@ -918,6 +920,14 @@ def get_tpcds_query_nodes(job_num = 1):
                          pl.col("ws_pricing_net_paid"),
                          pl.col("ws_pricing_ext_sales_price"),
                          pl.col("ws_bill_customer_sk")]),
+            [], tablereader)
+
+        cs_base = ExecutionNode("cs_base",
+            lambda: tablereader.read_table("catalog_sales")
+                .select([pl.col("cs_sold_item_sk"), pl.col("cs_sold_date_sk"),
+                         pl.col("cs_order_number"),
+                         pl.col("cs_pricing_quantity"),
+                         pl.col("cs_pricing_ext_sales_price")]),
             [], tablereader)
 
         ws_q74 = ExecutionNode("ws_q74",
@@ -940,7 +950,7 @@ def get_tpcds_query_nodes(job_num = 1):
             ["ws_base"], tablereader)
 
         ss_q74 = ExecutionNode("ss_q74",
-            lambda ws_base: ws_base
+            lambda ss_base: ss_base
                 .join(tablereader.read_table("customer"),
                       left_on = "ss_sold_customer_sk",
                       right_on = "c_customer_sk")
@@ -1016,7 +1026,7 @@ def get_tpcds_query_nodes(job_num = 1):
             ["t_s_firstyear", "t_s_secyear", "t_w_firstyear", "t_w_secyear"],
             tablereader)
 
-        query74_nodes = [ss_base, ws_base, ws_q74, ss_q74, year_total,
+        query74_nodes = [ss_base, ws_base, cs_base, ws_q74, ss_q74, year_total,
                          t_s_firstyear, t_s_secyear, t_w_firstyear, t_w_secyear,
                          query74_result]
 
@@ -1064,11 +1074,7 @@ def get_tpcds_query_nodes(job_num = 1):
             ["ss_base"], tablereader)
 
         cs_q75 = ExecutionNode("cs_q75",
-            lambda: tablereader.read_table("catalog_sales")
-                .select([pl.col("cs_sold_item_sk"), pl.col("cs_sold_date_sk"),
-                         pl.col("cs_order_number"),
-                         pl.col("cs_pricing_quantity"),
-                         pl.col("cs_pricing_ext_sales_price")])
+            lambda cs_base: cs_base
                 .join(tablereader.read_table("item"),
                       left_on = "cs_sold_item_sk", right_on = "i_item_sk")
                 .join(tablereader.read_table("date"),
@@ -1087,7 +1093,7 @@ def get_tpcds_query_nodes(job_num = 1):
                          (pl.col("cs_pricing_ext_sales_price") -
                           pl.col("cr_pricing_reversed_charge"))
                          .alias("sales_amt")]),
-            [], tablereader)
+            ["cs_base"], tablereader)
 
         sales_detail = ExecutionNode("sales_detail",
             lambda ws_q75, ss_q75, cs_q75: ws_q75.vstack(ss_q75)
@@ -1150,58 +1156,67 @@ def get_tpcds_query_nodes(job_num = 1):
 
     # Job 4 (Queries 44, 49)----------------------------------------------------
     if job_num == 4:
-        
-        v1 = ExecutionNode("v1",
+        ss_base = ExecutionNode("ss_base",
             lambda: tablereader.read_table("store_sales")
-                .filter(pl.col("ss_sold_store_sk") == 1 &
-                        pl.col("ss_sold_customer_sk").is_null())
-                .select(pl.avg("ss_pricing_net_profit").alias("rank_col")),
-            [], tablereader)
+                .select([pl.col("ss_sold_item_sk"),
+                         pl.col("ss_sold_date_sk"),
+                         pl.col("ss_pricing_net_profit"),
+                         pl.col("ss_pricing_quantity"),
+                         pl.col("ss_pricing_net_paid"),
+                         pl.col("ss_ticket_number")]),
+            [], tablereader)                                
+
+        # Query 44
+        ss_by_item = ExecutionNode("ss_by_item",
+            lambda ss_base: ss_base
+                .groupby(pl.col("ss_sold_item_sk"))
+                .agg(pl.avg("ss_pricing_net_profit").alias("avg_profit")),
+            ["ss_base"], tablereader)
+        
+        avg = ExecutionNode("avg",
+            lambda ss_by_item: ss_by_item
+                .select(pl.avg("avg_profit").alias("avg_avg_profit")),
+            ["ss_by_item"], tablereader)
+
+        v1 = ExecutionNode("v1",
+            lambda ss_by_item, avg: ss_by_item
+                .filter(pl.col("avg_profit") > 0.9 *
+                        avg["avg_avg_profit"].to_list()[0])
+                .select([pl.col("ss_sold_item_sk").alias("item_sk"),
+                         pl.col("avg_profit").alias("rank_col")]),
+            ["ss_by_item", "avg"], tablereader)
 
         v2 = ExecutionNode("v2",
-            lambda: tablereader.read_table("store_sales")
-                .filter(pl.col("ss_sold_store_sk") == 1 &
-                        pl.col("ss_sold_customer_sk").is_null())
-                .select(pl.avg("ss_pricing_net_profit").alias("rank_col")),
-            [], tablereader)
+            lambda ss_by_item, avg: ss_by_item
+                .filter(pl.col("avg_profit") > 0.9 *
+                        avg["avg_avg_profit"].to_list()[0])
+                .select([pl.col("ss_sold_item_sk").alias("item_sk"),
+                         pl.col("avg_profit").alias("rank_col")]),
+            ["ss_by_item", "avg"], tablereader)
 
         v11 = ExecutionNode("v11",
-            lambda avg1: tablereader.read_table("store_sales")
-                .filter(pl.col("ss_sold_store_sk") == 1)
-                .groupby(pl.col("ss_sold_item_sk"))
-                .agg(pl.avg("ss_pricing_net_profit").alias("rank_col"))
-                .filter(pl.col("rank_col") > 0.9 *
-                        avg1["rank_col"].to_list()[0])
-                .select([pl.col("ss_sold_item_sk").alias("item_sk"),
-                         pl.col("rank_col")]),
+            lambda v1: v1
+                .select([pl.col("rank_col").rank(reverse = False).alias("rnk"),
+                         pl.col("item_sk")]),
             ["v1"], tablereader)
 
         v21 = ExecutionNode("v21",
-            lambda avg1: tablereader.read_table("store_sales")
-                .filter(pl.col("ss_sold_store_sk") == 1)
-                .groupby(pl.col("ss_sold_item_sk"))
-                .agg(pl.avg("ss_pricing_net_profit").alias("rank_col"))
-                .filter(pl.col("rank_col") > 0.9 *
-                        avg1["rank_col"].to_list()[0])
-                .select([pl.col("ss_sold_item_sk").alias("item_sk"),
-                         pl.col("rank_col")]),
+            lambda v2: v2
+                .select([pl.col("rank_col").rank(reverse = True).alias("rnk"),
+                         pl.col("item_sk")]),
             ["v2"], tablereader)
 
         ascending = ExecutionNode("ascending",
-            lambda v1: v1
-                .select([pl.col("rank_col").rank(reverse = False).alias("rnk"),
-                         pl.col("item_sk")])
+            lambda v11: v11
                 .filter(pl.col("rnk") < 11),
             ["v11"], tablereader)
 
         descending = ExecutionNode("descending",
-            lambda v2: v2
-                .select([pl.col("rank_col").rank(reverse = True).alias("rnk"),
-                         pl.col("item_sk")])
+            lambda v21: v21
                 .filter(pl.col("rnk") < 11),
             ["v21"], tablereader)
 
-        result = ExecutionNode("result",
+        query44_result = ExecutionNode("query44_result",
             lambda ascending, descending: ascending
                 .join(tablereader.read_table("item"),
                       left_on = "item_sk", right_on = "i_item_sk")
@@ -1218,8 +1233,156 @@ def get_tpcds_query_nodes(job_num = 1):
                 .sort("rnk"),
             ["ascending", "descending"], tablereader)
 
+        query44_nodes = [ss_base, ss_by_item, avg, v1, v2, v11, v21,
+                         ascending, descending, query44_result]
 
-        job4_nodes = [v1, v2, v11, v21, ascending, descending, result]
+        # Query 49
+        in_store = ExecutionNode("in_store",
+            lambda ss_base: ss_base
+                .filter(pl.col("ss_pricing_net_profit") > 1)
+                .filter(pl.col("ss_pricing_quantity") > 0)
+                .filter(pl.col("ss_pricing_net_paid") > 0)
+                .join(tablereader.read_table("store_returns"),
+                      left_on = ["ss_ticket_number", "ss_sold_item_sk"],
+                      right_on = ["sr_ticket_number", "sr_item_sk"],
+                      how = "left")
+                .filter(pl.col("sr_pricing_reversed_charge") > 1)
+                .fill_null(0)
+                .join(tablereader.read_table("date")
+                      .filter(pl.col("d_year") == 2001)
+                      .filter(pl.col("d_moy") == 12),
+                      left_on = "ss_sold_date_sk", right_on = "d_date_sk")
+                .groupby("ss_sold_item_sk")
+                .agg([pl.sum("ss_pricing_quantity").alias("ssq"),
+                      pl.sum("sr_pricing_quantity").alias("srq"),
+                      pl.sum("ss_pricing_net_paid").alias("ssa"),
+                      pl.sum("sr_pricing_reversed_charge").alias("sra")])
+                .select([(pl.col("srq") / pl.col("ssq")).alias("return_ratio"),
+                         (pl.col("sra") / pl.col("ssa")).alias("currency_ratio"),
+                         pl.col("ss_sold_item_sk").alias("item")]),
+            ["ss_base"], tablereader)
+
+        in_cat = ExecutionNode("in_cat",
+            lambda: tablereader.read_table("catalog_sales")
+                .filter(pl.col("cs_pricing_net_profit") > 1)
+                .filter(pl.col("cs_pricing_quantity") > 0)
+                .filter(pl.col("cs_pricing_net_paid") > 0)
+                .join(tablereader.read_table("catalog_returns"),
+                      left_on = ["cs_order_number", "cs_sold_item_sk"],
+                      right_on = ["cr_order_number", "cr_item_sk"],
+                      how = "left")
+                .filter(pl.col("cr_pricing_reversed_charge") > 1)
+                .fill_null(0)
+                .join(tablereader.read_table("date")
+                      .filter((pl.col("d_year") == 2001) &
+                              (pl.col("d_moy") == 12)),
+                      left_on = "cs_sold_date_sk", right_on = "d_date_sk")
+                .groupby("cs_sold_item_sk")
+                .agg([pl.sum("cs_pricing_quantity").alias("csq"),
+                      pl.sum("cr_pricing_quantity").alias("crq"),
+                      pl.sum("cs_pricing_net_paid").alias("csa"),
+                      pl.sum("cr_pricing_reversed_charge").alias("cra")])
+                .select([(pl.col("crq") / pl.col("csq")).alias("return_ratio"),
+                         (pl.col("cra") / pl.col("csa")).alias("currency_ratio"),
+                         pl.col("cs_sold_item_sk").alias("item")]),
+            [], tablereader)
+
+        in_web = ExecutionNode("in_web",
+            lambda: tablereader.read_table("web_sales")
+                .filter(pl.col("ws_pricing_net_profit") > 1)
+                .filter(pl.col("ws_pricing_quantity") > 0)
+                .filter(pl.col("ws_pricing_net_paid") > 0)
+                .join(tablereader.read_table("web_returns"),
+                      left_on = ["ws_order_number", "ws_item_sk"],
+                      right_on = ["wr_order_number", "wr_item_sk"],
+                      how = "left")
+                .filter(pl.col("wr_pricing_reversed_charge") > 1)
+                .fill_null(0)
+                .join(tablereader.read_table("date")
+                      .filter(pl.col("d_year") == 2001)
+                      .filter(pl.col("d_moy") == 12),
+                      left_on = "ws_sold_date_sk", right_on = "d_date_sk")
+                .groupby("ws_item_sk")
+                .agg([pl.sum("ws_pricing_quantity").alias("wsq"),
+                      pl.sum("wr_pricing_quantity").alias("wrq"),
+                      pl.sum("ws_pricing_net_paid").alias("wsa"),
+                      pl.sum("wr_pricing_reversed_charge").alias("wra")])
+                .select([(pl.col("wrq") / pl.col("wsq")).alias("return_ratio"),
+                         (pl.col("wra") / pl.col("wsa")).alias("currency_ratio"),
+                         pl.col("ws_item_sk").alias("item")]),
+            [], tablereader)
+
+        store = ExecutionNode("store",
+            lambda in_store: in_store
+                .select([pl.col("item"), pl.col("return_ratio"),
+                         pl.col("currency_ratio"),
+                         pl.col("return_ratio").rank(reverse = True)
+                         .alias("return_rank"),
+                         pl.col("currency_ratio").rank(reverse = True)
+                         .alias("currency_rank")]),
+            ["in_store"], tablereader)
+
+        catalog = ExecutionNode("catalog",
+            lambda in_cat: in_cat
+                .select([pl.col("item"), pl.col("return_ratio"),
+                         pl.col("currency_ratio"),
+                         pl.col("return_ratio").rank(reverse = True)
+                         .alias("return_rank"),
+                         pl.col("currency_ratio").rank(reverse = True)
+                         .alias("currency_rank")]),
+            ["in_cat"], tablereader)
+
+        web = ExecutionNode("web",
+            lambda in_web: in_web
+                .select([pl.col("item"), pl.col("return_ratio"),
+                         pl.col("currency_ratio"),
+                         pl.col("return_ratio").rank(reverse = True)
+                         .alias("return_rank"),
+                         pl.col("currency_ratio").rank(reverse = True)
+                         .alias("currency_rank")]),
+            ["in_web"], tablereader)
+
+        store_filter = ExecutionNode("store_filter",
+            lambda store: store
+                .filter((pl.col("currency_rank") <= 10) |
+                        (pl.col("return_rank") <= 10))
+                .select([pl.lit("store").alias("channel"),
+                         pl.col("item"), pl.col("return_ratio"),
+                         pl.col("return_rank"), pl.col("currency_rank")]),
+            ["store"], tablereader)
+
+        catalog_filter = ExecutionNode("catalog_filter",
+            lambda catalog: catalog
+                .filter((pl.col("currency_rank") <= 10) |
+                        (pl.col("return_rank") <= 10))
+                .select([pl.lit("catalog").alias("channel"),
+                         pl.col("item"), pl.col("return_ratio"),
+                         pl.col("return_rank"), pl.col("currency_rank")]),
+            ["catalog"], tablereader)
+
+        web_filter = ExecutionNode("web_filter",
+            lambda web: web
+                .filter((pl.col("currency_rank") <= 10) |
+                        (pl.col("return_rank") <= 10))
+                .select([pl.lit("web").alias("channel"),
+                         pl.col("item"), pl.col("return_ratio"),
+                         pl.col("return_rank"), pl.col("currency_rank")]),
+            ["web"], tablereader)
+                
+        query49_result = ExecutionNode("query49_result",
+            lambda store_filter, catalog_filter, web_filter: store_filter
+                .vstack(catalog_filter).vstack(web_filter)
+                .select([pl.col("channel"),
+                         pl.col("item"), pl.col("return_ratio"),
+                         pl.col("return_rank"), pl.col("currency_rank")])
+                .sort(["channel", "return_rank", "currency_rank", "item"])
+                .limit(100),
+            ["store_filter", "catalog_filter", "web_filter"], tablereader)
+
+        query49_nodes = [in_store, in_cat, in_web, store, catalog, web, store_filter,
+                         catalog_filter, web_filter, query49_result]
+
+        job4_nodes = query44_nodes + query49_nodes
 
         return job4_nodes, tablereader
 
@@ -1230,30 +1393,45 @@ def get_tpcds_query_nodes(job_num = 1):
         ss_base = ExecutionNode("ss_base",
             lambda: tablereader.read_table("store_sales")
                 .join(tablereader.read_table("date")
+                      .select([pl.col("d_year"), pl.col("d_date_sk"),
+                               pl.col("d_moy"), pl.col("d_week_seq"),
+                               pl.col("d_date")])
                       .filter((pl.col("d_year") >= 1999) &
                               (pl.col("d_year") <= 2001)),
                       left_on = "ss_sold_date_sk", right_on = "d_date_sk")
-                .join(tablereader.read_table("item"),
+                .join(tablereader.read_table("item")
+                      .select([pl.col("i_item_sk"), pl.col("i_brand_id"),
+                               pl.col("i_class_id"), pl.col("i_category_id")]),
                       left_on = "ss_sold_item_sk", right_on = "i_item_sk"),
             [], tablereader)
 
         cs_base = ExecutionNode("cs_base",
             lambda: tablereader.read_table("catalog_sales")
                 .join(tablereader.read_table("date")
+                      .select([pl.col("d_year"), pl.col("d_date_sk"),
+                               pl.col("d_moy"), pl.col("d_week_seq"),
+                               pl.col("d_date")])
                       .filter((pl.col("d_year") >= 1999) &
                               (pl.col("d_year") <= 2001)),
                       left_on = "cs_sold_date_sk", right_on = "d_date_sk")
-                .join(tablereader.read_table("item"),
+                .join(tablereader.read_table("item")
+                      .select([pl.col("i_item_sk"), pl.col("i_brand_id"),
+                               pl.col("i_class_id"), pl.col("i_category_id")]),
                       left_on = "cs_sold_item_sk", right_on = "i_item_sk"),
             [], tablereader)
 
         ws_base = ExecutionNode("ws_base",
             lambda: tablereader.read_table("web_sales")
                 .join(tablereader.read_table("date")
+                      .select([pl.col("d_year"), pl.col("d_date_sk"),
+                               pl.col("d_moy"), pl.col("d_week_seq"),
+                               pl.col("d_date")])
                       .filter((pl.col("d_year") >= 1999) &
                               (pl.col("d_year") <= 2001)),
                       left_on = "ws_sold_date_sk", right_on = "d_date_sk")
-                .join(tablereader.read_table("item"),
+                .join(tablereader.read_table("item")
+                      .select([pl.col("i_item_sk"), pl.col("i_brand_id"),
+                               pl.col("i_class_id"), pl.col("i_category_id")]),
                       left_on = "ws_item_sk", right_on = "i_item_sk"),
             [], tablereader)
 
@@ -1279,18 +1457,18 @@ def get_tpcds_query_nodes(job_num = 1):
             ["ws_base"], tablereader)
 
         intersect = ExecutionNode("intersect",
-            lambda ssi_q14, csi_q14, wsi_q14: ssi_q14
-                .join(csi_q14, on = ["brand_id", "class_id", "category_id"],
-                      how = "inner")
-                .join(wsi_q14, on = ["brand_id", "class_id", "category_id"],
-                      how = "inner"),
+            lambda ssi_q14, csi_q14, wsi_q14: ssi_q14.distinct()
+                .join(csi_q14.distinct(),
+                      on = ["brand_id", "class_id", "category_id"])
+                .join(wsi_q14.distinct(),
+                      on = ["brand_id", "class_id", "category_id"]),
             ["ssi_q14", "csi_q14", "wsi_q14"], tablereader)
 
         cross_items = ExecutionNode("cross_items",
             lambda intersect: intersect
                 .join(tablereader.read_table("item"),
-                      left_on = ["i_brand_id", "i_class_id", "i_category_id"],
-                      right_on = ["brand_id", "class_id", "category_id"])
+                      left_on = ["brand_id", "class_id", "category_id"],
+                      right_on = ["i_brand_id", "i_class_id", "i_category_id"])
                 .select(pl.col("i_item_sk").alias("ss_item_sk")),
             ["intersect"], tablereader)
 
@@ -1319,8 +1497,9 @@ def get_tpcds_query_nodes(job_num = 1):
 
         avg_sales = ExecutionNode("avg_sales",
             lambda x: x
-                .select(pl.avg(pl.col("quantity") *
-                               pl.col("list_price")).alias("average_sales")),
+                .with_columns((pl.col("quantity") *
+                               pl.col("list_price")).alias("temp_product"))
+                .select(pl.avg("temp_product").alias("average_sales")),
             ["x"], tablereader)
 
         ss_iteration1 = ExecutionNode("ss_iteration1",
@@ -1328,16 +1507,15 @@ def get_tpcds_query_nodes(job_num = 1):
                 .filter(pl.col("d_year") == 2001)
                 .filter(pl.col("d_moy") == 11)
                 .filter(pl.col("ss_sold_item_sk")
-                              .is_in(list(cross_items
-                                     .select(pl.col("ss_item_sk")))))
-                .groupby(["i_brand_id", "i_class_id", "i_category_id"])
+                              .is_in(cross_items["ss_item_sk"].to_list()))
                 .with_columns((pl.col("ss_pricing_quantity") *
                                pl.col("ss_pricing_list_price"))
                               .alias("sales_product"))
+                .groupby(["i_brand_id", "i_class_id", "i_category_id"])
                 .agg([pl.sum("sales_product").alias("sales"),
-                      pl.count("sales_product").alias("number_sales")])
-                .filter(pl.col("sales") > list(avg_sales
-                                     .select(pl.col("average_sales")))[0])
+                      pl.count().alias("number_sales")])
+                .filter(pl.col("sales") > avg_sales["average_sales"]
+                        .to_list()[0])
                 .select([pl.lit("store").alias("channel"),
                          pl.col("i_brand_id"), pl.col("i_class_id"),
                          pl.col("i_category_id"), pl.col("sales"),
@@ -1349,16 +1527,15 @@ def get_tpcds_query_nodes(job_num = 1):
                 .filter(pl.col("d_year") == 2001)
                 .filter(pl.col("d_moy") == 11)
                 .filter(pl.col("cs_sold_item_sk")
-                              .is_in(list(cross_items
-                                     .select(pl.col("ss_item_sk")))))
-                .groupby(["i_brand_id", "i_class_id", "i_category_id"])
+                              .is_in(cross_items["ss_item_sk"].to_list()))
                 .with_columns((pl.col("cs_pricing_quantity") *
                                pl.col("cs_pricing_list_price"))
                               .alias("sales_product"))
+                .groupby(["i_brand_id", "i_class_id", "i_category_id"])
                 .agg([pl.sum("sales_product").alias("sales"),
-                      pl.count("sales_product").alias("number_sales")])
-                .filter(pl.col("sales") > list(avg_sales
-                                     .select(pl.col("average_sales")))[0])
+                      pl.count().alias("number_sales")])
+                .filter(pl.col("sales") > avg_sales["average_sales"]
+                        .to_list()[0])
                 .select([pl.lit("catalog").alias("channel"),
                          pl.col("i_brand_id"), pl.col("i_class_id"),
                          pl.col("i_category_id"), pl.col("sales"),
@@ -1369,17 +1546,16 @@ def get_tpcds_query_nodes(job_num = 1):
             lambda ws_base, cross_items, avg_sales: ws_base
                 .filter(pl.col("d_year") == 2001)
                 .filter(pl.col("d_moy") == 11)
-                .filter(pl.col("ws_sold_item_sk")
-                              .is_in(list(cross_items
-                                     .select(pl.col("ss_item_sk")))))
-                .groupby(["i_brand_id", "i_class_id", "i_category_id"])
+                .filter(pl.col("ws_item_sk")
+                              .is_in(cross_items["ss_item_sk"].to_list()))
                 .with_columns((pl.col("ws_pricing_quantity") *
                                pl.col("ws_pricing_list_price"))
                               .alias("sales_product"))
+                .groupby(["i_brand_id", "i_class_id", "i_category_id"])
                 .agg([pl.sum("sales_product").alias("sales"),
-                      pl.count("sales_product").alias("number_sales")])
-                .filter(pl.col("sales") > list(avg_sales
-                                     .select(pl.col("average_sales")))[0])
+                      pl.count().alias("number_sales")])
+                .filter(pl.col("sales") > avg_sales["average_sales"]
+                        .to_list()[0])
                 .select([pl.lit("web").alias("channel"),
                          pl.col("i_brand_id"), pl.col("i_class_id"),
                          pl.col("i_category_id"), pl.col("sales"),
@@ -1407,23 +1583,22 @@ def get_tpcds_query_nodes(job_num = 1):
 
         this_year = ExecutionNode("this_year",
             lambda ss_base, cross_items, avg_sales: ss_base
-                .filter(pl.col("d_week_seq") > list(tablereader
+                .filter(pl.col("d_week_seq") > tablereader
                                                     .read_table("date")
-                                     .filter(pl.col("d_year") == 2000)
+                                     .filter(pl.col("d_year") == 1999)
                                      .filter(pl.col("d_moy") == 12)
                                      .filter(pl.col("d_dom") == 11)
-                                     .select(pl.col("d_week_seq")))[0])
+                                     ["d_week_seq"].to_list()[0])
                 .filter(pl.col("ss_sold_item_sk")
-                              .is_in(list(cross_items
-                                     .select(pl.col("ss_item_sk")))))
-                .groupby(["i_brand_id", "i_class_id", "i_category_id"])
+                              .is_in(cross_items["ss_item_sk"].to_list()))
                 .with_columns((pl.col("ss_pricing_quantity") *
                                pl.col("ss_pricing_list_price"))
                               .alias("sales_product"))
+                .groupby(["i_brand_id", "i_class_id", "i_category_id"])
                 .agg([pl.sum("sales_product").alias("sales"),
-                      pl.count("sales_product").alias("number_sales")])
-                .filter(pl.col("sales") > list(avg_sales
-                                     .select(pl.col("average_sales")))[0])
+                      pl.count().alias("number_sales")])
+                .filter(pl.col("sales") > avg_sales["average_sales"]
+                        .to_list()[0])
                 .select([pl.lit("store").alias("channel"),
                          pl.col("i_brand_id"), pl.col("i_class_id"),
                          pl.col("i_category_id"),
@@ -1433,23 +1608,22 @@ def get_tpcds_query_nodes(job_num = 1):
 
         last_year = ExecutionNode("last_year",
             lambda ss_base, cross_items, avg_sales: ss_base
-                .filter(pl.col("d_week_seq") > list(tablereader
+                .filter(pl.col("d_week_seq") > tablereader
                                                     .read_table("date")
                                      .filter(pl.col("d_year") == 1999)
                                      .filter(pl.col("d_moy") == 12)
                                      .filter(pl.col("d_dom") == 11)
-                                     .select(pl.col("d_week_seq")))[0])
+                                     ["d_week_seq"].to_list()[0])
                 .filter(pl.col("ss_sold_item_sk")
-                              .is_in(list(cross_items
-                                     .select(pl.col("ss_item_sk")))))
-                .groupby(["i_brand_id", "i_class_id", "i_category_id"])
+                              .is_in(cross_items["ss_item_sk"].to_list()))
                 .with_columns((pl.col("ss_pricing_quantity") *
                                pl.col("ss_pricing_list_price"))
                               .alias("sales_product"))
+                .groupby(["i_brand_id", "i_class_id", "i_category_id"])
                 .agg([pl.sum("sales_product").alias("sales"),
-                      pl.count("sales_product").alias("number_sales")])
-                .filter(pl.col("sales") > list(avg_sales
-                                     .select(pl.col("average_sales")))[0])
+                      pl.count().alias("number_sales")])
+                .filter(pl.col("sales") > avg_sales["average_sales"]
+                        .to_list()[0])
                 .select([pl.lit("store").alias("channel"),
                          pl.col("i_brand_id"), pl.col("i_class_id"),
                          pl.col("i_category_id"),
@@ -1481,7 +1655,137 @@ def get_tpcds_query_nodes(job_num = 1):
                          ws_iteration1, y_iteration1, query14_result1,
                          this_year, last_year, query14_result2]
 
-        return query14_nodes, tablereader
+        # Query 23
+        frequent_ss_items = ExecutionNode("frequent_ss_items",
+            lambda ss_base: ss_base
+                .with_columns(pl.lit(str(pl.col("i_item_desc"))[:30])
+                              .alias("itemdesc"))
+                .groupby(["itemdesc", "ss_sold_item_sk", "d_date"])
+                .agg(pl.count().alias("cnt"))
+                .filter(pl.col("cnt") > 4)
+                .select([pl.col("itemdesc"), pl.col("cnt"),
+                         pl.col("ss_sold_item_sk").alias("item_sk"),
+                         pl.col("d_date").alias("soldate")]),
+            ["ss_base"], tablereader)
 
+        max_store_sales = ExecutionNode("max_store_sales",
+            lambda ss_base: ss_base
+                .join(tablereader.read_table("customer"),
+                      left_on = "ss_sold_customer_sk",
+                      right_on = "c_customer_sk")
+                .with_columns((pl.col("ss_pricing_quantity") *
+                               pl.col("ss_pricing_sales_price"))
+                              .alias("csales"))
+                .groupby(["ss_sold_customer_sk"])
+                .agg(pl.sum("csales").alias("csales_sum"))
+                .select(pl.max("csales_sum").alias("csales_max")),
+            ["ss_base"], tablereader)
 
+        best_ss_customer = ExecutionNode("best_ss_customer",
+            lambda ss_base, max_store_sales: ss_base
+                .join(tablereader.read_table("customer"),
+                      left_on = "ss_sold_customer_sk",
+                      right_on = "c_customer_sk")
+                .with_columns((pl.col("ss_pricing_quantity") *
+                               pl.col("ss_pricing_sales_price"))
+                              .alias("csales"))
+                .groupby(["ss_sold_customer_sk"])
+                .agg(pl.sum("csales").alias("csales_sum"))
+                .filter(pl.col("csales_sum") > max_store_sales["csales_max"]
+                        .to_list()[0] * 0.6)
+                .select([pl.col("csales_sum"), pl.col("ss_sold_customer_sk")]),
+            ["ss_base", "max_store_sales"], tablereader)
 
+        css_iteration1 = ExecutionNode("css_iteration1",
+            lambda cs_base, frequent_ss_items, best_ss_customer: cs_base
+                .filter(pl.col("cs_sold_item_sk")
+                        .is_in(frequent_ss_items["item_sk"].to_list()))
+                .filter(pl.col("cs_bill_customer_sk")
+                        .is_in(best_ss_customer["ss_sold_customer_sk"]
+                               .to_list()))
+                .select((pl.col("cs_pricing_quantity") *
+                         pl.col("cs_pricing_list_price"))
+                        .alias("sales")),
+            ["cs_base", "frequent_ss_items", "best_ss_customer"], tablereader)
+
+        wss_iteration1 = ExecutionNode("wss_iteration1",
+            lambda ws_base, frequent_ss_items, best_ss_customer: ws_base
+                .filter(pl.col("ws_item_sk")
+                        .is_in(frequent_ss_items["item_sk"].to_list()))
+                .filter(pl.col("ws_bill_customer_sk")
+                        .is_in(best_ss_customer["ss_sold_customer_sk"]
+                               .to_list()))
+                .select((pl.col("ws_pricing_quantity") *
+                         pl.col("ws_pricing_list_price"))
+                        .alias("sales")),
+            ["ws_base", "frequent_ss_items", "best_ss_customer"], tablereader)
+
+        stack_iteration1 = ExecutionNode("stack_iteration1",
+            lambda css_iteration1, wss_iteration1: css_iteration1
+                .vstack(wss_iteration1).distinct(),
+            ["css_iteration1", "wss_iteration1"], tablereader)
+
+        query23_result1 = ExecutionNode("query23_result1",
+            lambda stack_iteration1: stack_iteration1
+                .select(pl.sum("sales").alias("sum_sales")),
+            ["stack_iteration1"], tablereader)
+
+        css_iteration2 = ExecutionNode("css_iteration2",
+            lambda cs_base, frequent_ss_items, best_ss_customer: cs_base
+                .filter(pl.col("cs_sold_item_sk")
+                        .is_in(frequent_ss_items["item_sk"].to_list()))
+                .filter(pl.col("cs_bill_customer_sk")
+                        .is_in(best_ss_customer["ss_sold_customer_sk"]
+                               .to_list()))
+                .join(tablereader.read_table("customer"),
+                      left_on = "cs_bill_customer_sk",
+                      right_on = "c_customer_sk")
+                .with_columns((pl.col("cs_pricing_quantity") *
+                               pl.col("cs_pricing_sales_price"))
+                              .alias("sales"))
+                .groupby(["c_last_name", "c_first_name"])
+                .agg(pl.sum("sales").alias("sales_sum"))
+                .select([pl.col("c_last_name"), pl.col("c_first_name"),
+                         pl.col("sales_sum")]),
+            ["cs_base", "frequent_ss_items", "best_ss_customer"], tablereader)
+
+        wss_iteration2 = ExecutionNode("wss_iteration2",
+            lambda ws_base, frequent_ss_items, best_ss_customer: ws_base
+                .filter(pl.col("ws_item_sk")
+                        .is_in(frequent_ss_items["item_sk"].to_list()))
+                .filter(pl.col("ws_bill_customer_sk")
+                        .is_in(best_ss_customer["ss_sold_customer_sk"]
+                               .to_list()))
+                .join(tablereader.read_table("customer"),
+                      left_on = "ws_bill_customer_sk",
+                      right_on = "c_customer_sk")
+                .with_columns((pl.col("ws_pricing_quantity") *
+                               pl.col("ws_pricing_sales_price"))
+                              .alias("sales"))
+                .groupby(["c_last_name", "c_first_name"])
+                .agg(pl.sum("sales").alias("sales_sum"))
+                .select([pl.col("c_last_name"), pl.col("c_first_name"),
+                         pl.col("sales_sum")]),
+            ["ws_base", "frequent_ss_items", "best_ss_customer"], tablereader)
+
+        stack_iteration2 = ExecutionNode("stack_iteration2",
+            lambda css_iteration2, wss_iteration2: css_iteration2
+                .vstack(wss_iteration2).distinct(),
+            ["css_iteration2", "wss_iteration2"], tablereader)
+
+        query23_result2 = ExecutionNode("query23_result2",
+            lambda stack_iteration1: stack_iteration1
+                .select([pl.col("c_last_name"), pl.col("c_first_name"),
+                         pl.col("sales_sum")])
+                .sort(["c_last_name", "c_first_name", "sales_sum"])
+                .limit(100),
+            ["stack_iteration2"], tablereader)
+        
+        query23_nodes = [frequent_ss_items, max_store_sales, best_ss_customer,
+                         css_iteration1, wss_iteration1, stack_iteration1,
+                         css_iteration2, wss_iteration2, stack_iteration2,
+                         query23_result1, query23_result2]
+
+        job5_nodes = query14_nodes + query23_nodes
+        
+        return job5_nodes, tablereader
