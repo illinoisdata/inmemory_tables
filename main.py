@@ -6,6 +6,8 @@ import polars as pl
 import argparse
 import glob
 import os
+import time
+import gc
 from collections import Counter
 
 if __name__ == '__main__':
@@ -40,6 +42,9 @@ if __name__ == '__main__':
     optimizer = Optimizer(execution_graph,
                           memory_limit = float(args.memory) * 1000000000)
     optimizer.optimize(execution_order_method = "both", debug = True)
+
+    gc.collect()
+    time.sleep(2)
 
     # Evaluate efficiency after optimization
     execution_graph.execute(debug = False, save_inmemory_tables = False)
