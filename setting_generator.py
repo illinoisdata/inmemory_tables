@@ -62,7 +62,8 @@ if __name__ == '__main__':
 
         myfile = open("results/result.txt", "a")
         myfile.write(str(args.job) + " " + str(args.memory) + " " +
-                     str(args.store) + " " + str(args.top) + ": " +
+                     str(store_nodes_method) + " " +
+                     str(execution_order_method) + ": " +
                      str(computation_time) + "\n")
         myfile.close()
 
