@@ -147,7 +147,8 @@ Randomly select nodes to store given memory limit.
 """
 def store_nodes_random(graph, execution_order, node_scores, node_sizes,
                        nodes_to_exclude, memory_limit, debug = False):
-    
+
+    new_store_in_memory = set()
     for name in np.random.permutation(graph.nodes):
         new_peak_memory_usage = compute_peak_memory_usage(graph,
             execution_order, node_sizes,
