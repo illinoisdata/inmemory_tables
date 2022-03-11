@@ -35,7 +35,7 @@ class TableReader(object):
         print("total table read time:",
               sum(list(self.table_read_times.values())))
 
-        return sum(list(self.table_read_times.values())))
+        return sum(list(self.table_read_times.values()))
 
     def clear(self):
         self.table_read_times = defaultdict(int)
