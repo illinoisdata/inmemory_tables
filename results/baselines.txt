@@ -1,0 +1,11 @@
+mkp both
+all none
+none none
+greedy none
+random none
+mkp none
+greedy both
+random both
+mkp dfs
+mkp sa
+mkp recursive_min_cut
