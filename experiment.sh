@@ -7,25 +7,15 @@ for i in 1 2 3 4 5
 			python3 setting_generator.py --job $i --memory $j
 			wait
 			python3 setting_consumer.py --job $i --memory $j --store mkp --top both
-			wait
 			python3 setting_consumer.py --job $i --memory $j --store all --top none
-			wait
 			python3 setting_consumer.py --job $i --memory $j --store none --top none
-			wait
 			python3 setting_consumer.py --job $i --memory $j --store greedy --top none
-			wait
 			python3 setting_consumer.py --job $i --memory $j --store random --top none
-			wait
 			python3 setting_consumer.py --job $i --memory $j --store mkp --top none
-			wait
 			python3 setting_consumer.py --job $i --memory $j --store greedy --top both
-			wait
 			python3 setting_consumer.py --job $i --memory $j --store random --top both
-			wait
 			python3 setting_consumer.py --job $i --memory $j --store mkp --top dfs
-			wait
 			python3 setting_consumer.py --job $i --memory $j --store mkp --top sa
-			wait
 			python3 setting_consumer.py --job $i --memory $j --store mkp --top recursive_min_cut
 			wait
 		done
