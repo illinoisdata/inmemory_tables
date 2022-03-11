@@ -57,7 +57,7 @@ if __name__ == '__main__':
         prev_time_save, _, computation_time = optimizer.optimize(
             store_nodes_method = store_nodes_method,
             execution_order_method = execution_order_method,
-            debug = True)
+            debug = False)
 
         print("optimize: ", store_nodes_method, execution_order_method,
               prev_time_save, computation_time)

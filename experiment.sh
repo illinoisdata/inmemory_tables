@@ -2,7 +2,7 @@ for iter in 1 2 3 4 5
 do
 for i in 1 2 3 4 5
 	do
-	for j in 2 5
+	for j in 0.2 0.5
 		do
 			python3 setting_generator.py --job $i --memory $j
 			wait
