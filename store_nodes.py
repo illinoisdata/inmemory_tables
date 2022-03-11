@@ -11,8 +11,9 @@ def store_nodes_all(graph, execution_order,
                     node_scores, node_sizes, nodes_to_exclude, debug = False):
     
     new_store_in_memory = set()
-    for node in graph.nodes and node not in nodes_to_exclude:
-        new_store_in_memory.add(node)
+    for node in graph.nodes:
+        if node not in nodes_to_exclude:
+            new_store_in_memory.add(node)
 
     new_time_save = sum([node_scores[i] for i in new_store_in_memory])
     new_peak_memory_usage = compute_peak_memory_usage(
