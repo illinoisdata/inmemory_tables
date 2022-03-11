@@ -43,7 +43,8 @@ if __name__ == '__main__':
     # order
     optimizer = Optimizer(execution_graph,
                           memory_limit = float(args.memory) * 1000000000)
-    optimizer.optimize(execution_order_method = "both", debug = False)
+    optimizer.optimize(store_nodes_method = "greedy",
+        execution_order_method = "both", debug = False)
 
     del optimizer
     gc.collect()

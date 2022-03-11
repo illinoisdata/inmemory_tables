@@ -6,18 +6,40 @@ for i in 1 2 3 4 5
 		do
 			python3 setting_generator.py --job $i --memory $j
 			wait
-			python3 setting_consumer.py --job $i --memory $j --store mkp --top both
+			sleep 1
 			python3 setting_consumer.py --job $i --memory $j --store all --top none
+			wait
+			sleep 1
 			python3 setting_consumer.py --job $i --memory $j --store none --top none
+			wait
+			sleep 1
 			python3 setting_consumer.py --job $i --memory $j --store greedy --top none
+			wait
+			sleep 1
 			python3 setting_consumer.py --job $i --memory $j --store random --top none
+			wait
+			sleep 1
 			python3 setting_consumer.py --job $i --memory $j --store mkp --top none
+			wait
+			sleep 1
 			python3 setting_consumer.py --job $i --memory $j --store greedy --top both
+			wait
+			sleep 1
 			python3 setting_consumer.py --job $i --memory $j --store random --top both
+			wait
+			sleep 1
 			python3 setting_consumer.py --job $i --memory $j --store mkp --top dfs
+			wait
+			sleep 1
 			python3 setting_consumer.py --job $i --memory $j --store mkp --top sa
+			wait
+			sleep 1
 			python3 setting_consumer.py --job $i --memory $j --store mkp --top recursive_min_cut
 			wait
+			sleep 1
+			python3 setting_consumer.py --job $i --memory $j --store mkp --top both
+			wait
+			sleep 1
 		done
 	done
 done

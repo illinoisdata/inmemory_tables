@@ -51,8 +51,6 @@ if __name__ == '__main__':
         store_nodes_method = setting[0]
         execution_order_method = setting[1]
 
-        print("running", store_nodes_method, execution_order_method)
-
         execution_graph.execution_order = default_order
         execution_graph.store_in_memory = set()
 
@@ -61,8 +59,11 @@ if __name__ == '__main__':
             execution_order_method = execution_order_method,
             debug = False)
 
+        print("optimize: ", store_nodes_method, execution_order_method,
+              prev_time_save, computation_time)
+
         myfile = open("results/result.txt", "a")
-        myfile.write(str(args.job) + " " + str(args.memory) + " " +
+        myfile.write("o " + str(args.job) + " " + str(args.memory) + " " +
                      str(store_nodes_method) + " " +
                      str(execution_order_method) + ": " +
                      str(computation_time)  + " " +

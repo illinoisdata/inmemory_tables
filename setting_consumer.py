@@ -18,8 +18,6 @@ if __name__ == '__main__':
     parser.add_argument("-S", "--store", help="Method for flagging nodes")
     parser.add_argument("-T", "--top", help="Method for topological order")
     args = parser.parse_args()
-
-    print("running", args.job, args.memory, args.store, args.top)
     
     # Get node representation of a TPC-DS query 
     execution_nodes, tablereader = get_tpcds_query_nodes(
@@ -45,12 +43,17 @@ if __name__ == '__main__':
 
     total_read_time = tablereader.report()
 
+    print("execute:", args.job, args.memory, args.store, args.top,
+          execution_time_counter, time_to_deserialize_counter,
+          time_to_serialize_counter, total_read_time,
+          peak_memory_usage_counter)
+
     files = glob.glob('disk/*')
     for f in files:
         os.remove(f)
 
     myfile = open("results/result.txt", "a")
-    myfile.write(str(args.job) + " " + str(args.memory) + " " +
+    myfile.write("e " + str(args.job) + " " + str(args.memory) + " " +
                  str(args.store) + " " + str(args.top) + ": " +
                  str(execution_time_counter) + " " +
                  str(time_to_deserialize_counter) + " " +
