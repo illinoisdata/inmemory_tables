@@ -164,14 +164,16 @@ class ExecutionGraph(object):
             for node in self.node_dict.values()])
 
         # Print metadata
-        print("total execution time:", self.execution_time_counter)
-        print("total deserialize time:", self.time_to_deserialize_counter)
-        print("total serialize time:", self.time_to_serialize_counter)
-        print("maximum memory usage:", self.peak_memory_usage_counter)
+        if debug:
+            print("total execution time:", self.execution_time_counter)
+            print("total load time:", self.time_to_deserialize_counter)
+            print("total save time:", self.time_to_serialize_counter)
+            print("maximum memory usage:", self.peak_memory_usage_counter)
 
         # Join multithreaded writer
         if save_inmemory_tables:
             self.mt_queue.put(None)
             self.mt_thread.join()
 
-        return self.execution_time_counter
+        return self.execution_time_counter, self.time_to_deserialize_counter, \
+               self.time_to_serialize_counter, self.peak_memory_usage_counter

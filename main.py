@@ -14,6 +14,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-Q", "--job", help="TPC-DS job number")
     parser.add_argument("-M", "--memory", help="Memory container size")
+    parser.add_argument("-S", "--store", help="Method for flagging nodes")
+    parser.add_argument("-T", "--top", help="Method for topological order")
     args = parser.parse_args()
     
     # Get node representation of a TPC-DS query 
@@ -41,8 +43,9 @@ if __name__ == '__main__':
     # order
     optimizer = Optimizer(execution_graph,
                           memory_limit = float(args.memory) * 1000000000)
-    optimizer.optimize(execution_order_method = "both", debug = True)
+    optimizer.optimize(execution_order_method = "both", debug = False)
 
+    del optimizer
     gc.collect()
     time.sleep(2)
 

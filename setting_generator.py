@@ -21,8 +21,6 @@ if __name__ == '__main__':
     execution_nodes, tablereader = get_tpcds_query_nodes(
         job_num = int(args.job))
 
-    print("number of nodes:", len(execution_nodes))
-
     # Create graph & add nodes
     execution_graph = ExecutionGraph()
     execution_graph.add_nodes(execution_nodes)
@@ -40,13 +38,32 @@ if __name__ == '__main__':
     
     # Create optimizer to jointly optimize nodes to store in memory & execution
     # order
+    with open("results/baselines.txt") as file:
+        settings = [line.rstrip().split() for line in file]
+    file.close()
+
+    default_order = execution_graph.execution_order
+
     optimizer = Optimizer(execution_graph,
                           memory_limit = float(args.memory) * 1000000000)
-    optimizer.optimize(execution_order_method = "both", debug = True)
 
-    pickle.dump([execution_graph.store_in_memory,
-                execution_graph.execution_order],
-                open("configs/job_" + str(args.job) +
-                     "_mem_" + str(args.memory), "wb"))
+    for setting in settings:
+        store_nodes_method = setting[0]
+        execution_order_method = setting[1]
 
+        print("running", store_nodes_method, execution_order_method)
+
+        execution_graph.execution_order = default_order
+        execution_graph.store_in_memory = set()
+
+        optimizer.optimize(store_nodes_method = store_nodes_method,
+                           execution_order_method = execution_order_method,
+                           debug = False)
+
+        pickle.dump([execution_graph.store_in_memory,
+                    execution_graph.execution_order],
+                    open("configs/job_" + str(args.job) +
+                         "_mem_" + str(args.memory) +
+                         "_s_" + str(store_nodes_method) +
+                         "_t_" + str(execution_order_method), "wb"))
     
