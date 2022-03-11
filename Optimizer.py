@@ -207,7 +207,7 @@ class Optimizer(object):
 
             self.execution_graph.execution_order = new_execution_order
 
-        computation_time = time.time() - start)
+        computation_time = time.time() - start
         if debug:
             print("Algorithm computation time:", computation_time)
 
