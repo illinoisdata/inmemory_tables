@@ -50,6 +50,9 @@ def store_nodes_greedy_forward(graph, execution_order, node_scores, node_sizes,
     current_memory_usage = 0
     
     for name in execution_order:
+        if name in nodes_to_exclude:
+            continue
+        
         # Store node if possible
         if (node_sizes[name] <= memory_limit - current_memory_usage and
             name not in nodes_to_exclude):
@@ -85,6 +88,9 @@ def store_nodes_greedy_backward(graph, execution_order, node_scores, node_sizes,
     current_memory_usage = 0
     
     for name in reversed(execution_order):
+        if name in nodes_to_exclude:
+            continue
+        
         # Find dependencies freed here
         for parent_name in graph.predecessors(name):
             if (num_successors_dict[parent_name] == 0 and
@@ -150,6 +156,9 @@ def store_nodes_random(graph, execution_order, node_scores, node_sizes,
 
     new_store_in_memory = set()
     for name in np.random.permutation(graph.nodes):
+        if name in nodes_to_exclude:
+            continue
+        
         new_peak_memory_usage = compute_peak_memory_usage(graph,
             execution_order, node_sizes,
             new_store_in_memory.union({name}))

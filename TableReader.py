@@ -26,14 +26,15 @@ class TableReader(object):
 
         return table
 
-    def report(self):
-        print("table read times:")
-        for k, v in self.table_read_times.items():
-            print("Table:" + str(k) + " times read: " +
-                  str(self.table_read_num_times[k]) + " total time: " +
-                  str(v))
-        print("total table read time:",
-              sum(list(self.table_read_times.values())))
+    def report(self, debug = False):
+        if debug:
+            print("table read times:")
+            for k, v in self.table_read_times.items():
+                print("Table:" + str(k) + " times read: " +
+                      str(self.table_read_num_times[k]) + " total time: " +
+                      str(v))
+            print("total table read time:",
+                  sum(list(self.table_read_times.values())))
 
         return sum(list(self.table_read_times.values()))
 

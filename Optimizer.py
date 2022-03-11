@@ -206,8 +206,9 @@ class Optimizer(object):
                 break
 
             self.execution_graph.execution_order = new_execution_order
-            
-        if debug:
-            print("Algorithm computation time:", time.time() - start)
 
-        return prev_time_save, prev_peak_memory_usage
+        computation_time = time.time() - start)
+        if debug:
+            print("Algorithm computation time:", computation_time)
+
+        return prev_time_save, prev_peak_memory_usage, computation_time

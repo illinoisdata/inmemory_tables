@@ -156,15 +156,13 @@ def recursive_min_cut(graph, node_sizes, store_in_memory, debug = False):
         new_graph.add_edge(edge[1], edge[0] + "_done", capacity = 0)
 
     raw_execution_order = recursive_min_cut_helper(new_graph, memory_usage,
-                                               max_capacity, debug = True)
+                                               max_capacity, debug = debug)
 
     # Clean execution order
     execution_order = []
     for name in raw_execution_order:
         if name in graph.nodes():
             execution_order.append(name)
-
-    print(execution_order)
 
     # Compute peak memory usage
     new_peak_memory_usage = compute_peak_memory_usage(

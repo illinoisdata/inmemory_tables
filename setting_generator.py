@@ -56,9 +56,15 @@ if __name__ == '__main__':
         execution_graph.execution_order = default_order
         execution_graph.store_in_memory = set()
 
-        optimizer.optimize(store_nodes_method = store_nodes_method,
+        _, _, computation_time = optimizer.optimize(store_nodes_method = store_nodes_method,
                            execution_order_method = execution_order_method,
                            debug = False)
+
+        myfile = open("results/result.txt", "a")
+        myfile.write(str(args.job) + " " + str(args.memory) + " " +
+                     str(args.store) + " " + str(args.top) + ": " +
+                     str(computation_time) + "\n")
+        myfile.close()
 
         pickle.dump([execution_graph.store_in_memory,
                     execution_graph.execution_order],
