@@ -133,7 +133,7 @@ def store_nodes_greedy(graph, execution_order, node_scores, node_sizes,
             print("Time save:", t_forward)
             print("Peak memory usage:", m_forward)
             
-        return s_foward, t_forward, m_forward
+        return s_forward, t_forward, m_forward
 
     if debug:
         print("Time save:", t_backward)
