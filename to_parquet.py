@@ -34,8 +34,13 @@ if __name__ == '__main__':
     column_dict = read_columns()
     
     for column in column_dict.keys():
+        if column == "inventory":
+            continue
         print(column)
         table = read_table(column, column_dict)
+        parquet_result(table, column, location = 'tpcds/')
+
+        """
         column_dict[column] = column_dict[column][:len(table.columns)]
 
         p_size = 5
@@ -60,3 +65,4 @@ if __name__ == '__main__':
 
         for i in range(num_partitions):
             os.remove("tpcds/" + column + "_" + str(i) + ".parquet")
+        """
