@@ -126,6 +126,7 @@ def store_nodes_greedy(graph, execution_order, node_scores, node_sizes,
                                           nodes_to_exclude = nodes_to_exclude,
                                           memory_limit = memory_limit)
 
+    """
     s_backward, t_backward, m_backward = \
                 store_nodes_greedy_backward(graph = graph,
                                             execution_order = execution_order,
@@ -133,7 +134,15 @@ def store_nodes_greedy(graph, execution_order, node_scores, node_sizes,
                                             node_sizes = node_sizes,
                                             nodes_to_exclude = nodes_to_exclude,
                                             memory_limit = memory_limit)
+    """
 
+
+    if debug:
+         print("Time save:", t_forward)
+         print("Peak memory usage:", m_forward)
+            
+    return s_forward, t_forward, m_forward
+    """
     if t_forward >= t_backward:
         if debug:
             print("Time save:", t_forward)
@@ -146,6 +155,7 @@ def store_nodes_greedy(graph, execution_order, node_scores, node_sizes,
         print("Peak memory usage:", m_backward)
 
     return s_backward, t_backward, m_backward
+    """
     
 
 """
