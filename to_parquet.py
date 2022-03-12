@@ -4,6 +4,8 @@ from ExecutionNode import *
 from ExecutionGraph import *
 from Optimizer import *
 import polars as pl
+import pandas as pd
+import dask as dd
 import argparse
 import os
 import math
@@ -34,11 +36,12 @@ if __name__ == '__main__':
     column_dict = read_columns()
     
     for column in column_dict.keys():
-        if column == "inventory":
-            continue
         print(column)
         table = read_table(column, column_dict)
-        parquet_result(table, column, location = 'tpcds/')
+
+        pd_df = table.to_pandas()
+        pd_df.to_parquet("tpcds/" + column + ".parquet")
+        #parquet_result(table, column, location = 'tpcds/')
 
         """
         column_dict[column] = column_dict[column][:len(table.columns)]
