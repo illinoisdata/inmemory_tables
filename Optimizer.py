@@ -144,7 +144,7 @@ class Optimizer(object):
     """
     def optimize(self, store_nodes_method = "mkp",
                  execution_order_method = "both",
-                 sa_iters = 1000, debug = False):
+                 sa_iters = 10000, debug = False):
         
         # Retrieve node sizes & scores for optimization algorithm
         self.node_sizes = {node.name: node.get_result_size()
