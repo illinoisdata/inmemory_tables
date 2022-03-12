@@ -41,9 +41,11 @@ if __name__ == '__main__':
         num_partitions = int(math.ceil(len(column_dict[column]) / p_size))
         for i in range(num_partitions):
             if (i * p_size > len(column_dict[column])):
+                print(table[column_dict[column][i*p_size:])
                 parquet_result(table[column_dict[column][i*p_size:]],
                                column + "_" + str(i), location = 'tpcds/')
             else:
+                print(column_dict[column][i*p_size:(i+1)*p_size-1])
                 parquet_result(table[column_dict[column]
                                      [i*p_size:(i+1)*p_size-1]],
                                column + "_" + str(i), location = 'tpcds/') 
