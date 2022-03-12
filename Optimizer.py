@@ -77,7 +77,7 @@ class Optimizer(object):
     """
     Function for choosing method to improve execution order with.
     """
-    def improve_execution_order(self, method = "both", sa_iters = 1000,
+    def improve_execution_order(self, method = "both", sa_iters = 10000,
                                    debug = False):
         if method == "both":
             new_execution_order, _ = dfs_topological(

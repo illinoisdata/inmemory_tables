@@ -61,7 +61,7 @@ weighted minimum linear arrangement via simulated annealing.
 new_execution_order: a default execution order (passed from step 3)
 """
 def simulated_annealing(graph, node_sizes, store_in_memory, memory_limit,
-                        new_execution_order, n_iters = 1000, debug = False):
+                        new_execution_order, n_iters = 10000, debug = False):
     # Compute the actual memory usage of nodes based on its size and whether
     # it is stored in memory or not (i.e. if its not, then the usage is 0)
     memory_usage = {name: int(name in store_in_memory) * node_sizes[name]
