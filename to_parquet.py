@@ -39,9 +39,9 @@ if __name__ == '__main__':
         print(column)
         table = read_table(column, column_dict)
 
-        pd_df = table.to_pandas()
-        pd_df.to_parquet("tpcds/" + column + ".parquet")
-        #parquet_result(table, column, location = 'tpcds/')
+        #pd_df = table.to_pandas()
+        #pd_df.to_parquet("tpcds/" + column + ".parquet")
+        parquet_result(table, column, location = 'tpcds/', use_pyarrow = True)
 
         """
         column_dict[column] = column_dict[column][:len(table.columns)]
