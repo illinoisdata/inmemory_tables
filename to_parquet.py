@@ -36,7 +36,7 @@ if __name__ == '__main__':
     for column in column_dict.keys():
         print(column)
         table = read_table(column, column_dict)
-        column_dict[column] = column_dict[column][:column_count]
+        column_dict[column] = column_dict[column][:len(table.columns)]
 
         p_size = 5
         num_partitions = int(math.ceil(len(column_dict[column]) / p_size))
