@@ -5,6 +5,7 @@ from ExecutionGraph import *
 from Optimizer import *
 import polars as pl
 import argparse
+import os
 
 # Script for converting TPC-DS tables from .dat files to parquet.
 def read_columns():
@@ -32,5 +33,25 @@ if __name__ == '__main__':
     column_dict = read_columns()
     
     for column in column_dict.keys():
+        print(column)
         table = read_table(column, column_dict)
-        parquet_result(table, column, location = 'tpcds/')
+
+        p_size = 5
+        for i in range(len(column_dict[column]) / p_size):
+            if (i * p_size > len(column_dict[column])):
+                parquet_result(table[column_dict[column][i*p_size:]],
+                               column + "_" + str(i), location = 'tpcds/')
+            else:
+                parquet_result(table[column_dict[column]
+                                     [i*p_size:(i+1)*p_size-1]],
+                               column + "_" + str(i), location = 'tpcds/') 
+
+        df = unparquet_result(column + "_0", location = 'tpcds/')
+        for i in range(1, len(column_dict[column]) / p_size):
+            df = df.hstack(unparquet_result(column + "_" + str(i),
+                                            location = 'tpcds/'))
+
+        parquet_result(df, column, location = 'tpcds/')
+
+        for i in range(len(column_dict[column]) / p_size):
+            os.remove("tpcds/" + column + "_" + str(i) + ".parquet")
