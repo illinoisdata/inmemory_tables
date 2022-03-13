@@ -446,31 +446,34 @@ def get_tpcds_query_nodes(job_num = 1):
             lambda: tablereader.read_table("item")
                 .filter(pl.col("i_category")
                         .is_in(["Books", "Home", "Electronics",
-                                "Jewelry", "Sports"]))
-                .select(pl.col("i_manufact_id")),
+                                "Jewelry", "Sports"])),
             [], tablereader)
 
         category_q56 = ExecutionNode("category_q56",
             lambda: tablereader.read_table("item")
                 .filter(pl.col("i_color")
-                        .is_in(["slate", "blanched", "burnished"]))
-                .select(pl.col("i_item_id")),
+                        .is_in(["turquoise", "smoke", "slate", "thistle",
+                                "peach", "spring", "saddle", "tan",
+                                "salmon", "yellow", "royal", "papaya",
+                                "sky", "pale", "rosy", "seashell",
+                                "wheat", "steel", "white", "peru",
+                                "snow", "purple", "plum", "pink",
+                                "rose", "tomato", "red", "violet",
+                                "sandy", "sienna", "powder", "puff"])),
             [], tablereader)
 
         category_q60 = ExecutionNode("category_q60",
             lambda: tablereader.read_table("item")
                 .filter(pl.col("i_category")
                         .is_in(["Children", "Men", "Music",
-                                "Jewelry", "Shoes"]))
-                .select(pl.col("i_manufact_id")),
+                                "Jewelry", "Shoes"])),
             [], tablereader)
 
         category_q61 = ExecutionNode("category_q61",
             lambda: tablereader.read_table("item")
                 .filter(pl.col("i_category")
                         .is_in(["Books", "Home", "Electronics",
-                                "Jewelry", "Sports"]))
-                .select(pl.col("i_manufact_id")),
+                                "Jewelry", "Sports"])),
             [], tablereader)
 
         ss = ExecutionNode("ss",
@@ -1253,8 +1256,7 @@ def get_tpcds_query_nodes(job_num = 1):
                 .filter(pl.col("sr_pricing_reversed_charge") > 1)
                 .fill_null(0)
                 .join(tablereader.read_table("date")
-                      .filter(pl.col("d_year") == 2001)
-                      .filter(pl.col("d_moy") == 12),
+                      .filter(pl.col("d_year") == 2001),
                       left_on = "ss_sold_date_sk", right_on = "d_date_sk")
                 .groupby("ss_sold_item_sk")
                 .agg([pl.sum("ss_pricing_quantity").alias("ssq"),
@@ -1278,8 +1280,7 @@ def get_tpcds_query_nodes(job_num = 1):
                 .filter(pl.col("cr_pricing_reversed_charge") > 1)
                 .fill_null(0)
                 .join(tablereader.read_table("date")
-                      .filter((pl.col("d_year") == 2001) &
-                              (pl.col("d_moy") == 12)),
+                      .filter(pl.col("d_year") == 2001),
                       left_on = "cs_sold_date_sk", right_on = "d_date_sk")
                 .groupby("cs_sold_item_sk")
                 .agg([pl.sum("cs_pricing_quantity").alias("csq"),
@@ -1303,8 +1304,7 @@ def get_tpcds_query_nodes(job_num = 1):
                 .filter(pl.col("wr_pricing_reversed_charge") > 1)
                 .fill_null(0)
                 .join(tablereader.read_table("date")
-                      .filter(pl.col("d_year") == 2001)
-                      .filter(pl.col("d_moy") == 12),
+                      .filter(pl.col("d_year") == 2001),
                       left_on = "ws_sold_date_sk", right_on = "d_date_sk")
                 .groupby("ws_item_sk")
                 .agg([pl.sum("ws_pricing_quantity").alias("wsq"),
@@ -1508,8 +1508,6 @@ def get_tpcds_query_nodes(job_num = 1):
 
         ss_iteration1 = ExecutionNode("ss_iteration1",
             lambda ss_base, cross_items, avg_sales: ss_base
-                .filter(pl.col("d_year") == 2000)
-                .filter(pl.col("d_moy") == 11)
                 .filter(pl.col("ss_sold_item_sk")
                               .is_in(cross_items["ss_item_sk"].to_list()))
                 .with_columns((pl.col("ss_pricing_quantity") *
@@ -1519,7 +1517,7 @@ def get_tpcds_query_nodes(job_num = 1):
                 .agg([pl.sum("sales_product").alias("sales"),
                       pl.count().alias("number_sales")])
                 .filter(pl.col("sales") > avg_sales["average_sales"]
-                        .to_list()[0])
+                        .to_list()[0] * 0.5)
                 .select([pl.lit("store").alias("channel"),
                          pl.col("i_brand_id"), pl.col("i_class_id"),
                          pl.col("i_category_id"), pl.col("sales"),
@@ -1528,8 +1526,6 @@ def get_tpcds_query_nodes(job_num = 1):
 
         cs_iteration1 = ExecutionNode("cs_iteration1",
             lambda cs_base, cross_items, avg_sales: cs_base
-                .filter(pl.col("d_year") == 2000)
-                .filter(pl.col("d_moy") == 11)
                 .filter(pl.col("cs_sold_item_sk")
                               .is_in(cross_items["ss_item_sk"].to_list()))
                 .with_columns((pl.col("cs_pricing_quantity") *
@@ -1539,7 +1535,7 @@ def get_tpcds_query_nodes(job_num = 1):
                 .agg([pl.sum("sales_product").alias("sales"),
                       pl.count().alias("number_sales")])
                 .filter(pl.col("sales") > avg_sales["average_sales"]
-                        .to_list()[0])
+                        .to_list()[0] * 0.5)
                 .select([pl.lit("catalog").alias("channel"),
                          pl.col("i_brand_id"), pl.col("i_class_id"),
                          pl.col("i_category_id"), pl.col("sales"),
@@ -1548,8 +1544,6 @@ def get_tpcds_query_nodes(job_num = 1):
 
         ws_iteration1 = ExecutionNode("ws_iteration1",
             lambda ws_base, cross_items, avg_sales: ws_base
-                .filter(pl.col("d_year") == 2000)
-                .filter(pl.col("d_moy") == 11)
                 .filter(pl.col("ws_item_sk")
                               .is_in(cross_items["ss_item_sk"].to_list()))
                 .with_columns((pl.col("ws_pricing_quantity") *
@@ -1559,7 +1553,7 @@ def get_tpcds_query_nodes(job_num = 1):
                 .agg([pl.sum("sales_product").alias("sales"),
                       pl.count().alias("number_sales")])
                 .filter(pl.col("sales") > avg_sales["average_sales"]
-                        .to_list()[0])
+                        .to_list()[0] * 0.5)
                 .select([pl.lit("web").alias("channel"),
                          pl.col("i_brand_id"), pl.col("i_class_id"),
                          pl.col("i_category_id"), pl.col("sales"),
@@ -1587,12 +1581,10 @@ def get_tpcds_query_nodes(job_num = 1):
 
         this_year = ExecutionNode("this_year",
             lambda ss_base, cross_items, avg_sales: ss_base
-                .filter(pl.col("d_week_seq") > tablereader
+                .filter(pl.col("d_week_seq").is_in(tablereader
                                                     .read_table("date")
                                      .filter(pl.col("d_year") == 2000)
-                                     .filter(pl.col("d_moy") == 12)
-                                     .filter(pl.col("d_dom") == 11)
-                                     ["d_week_seq"].to_list()[0])
+                                     ["d_week_seq"].to_list()))
                 .filter(pl.col("ss_sold_item_sk")
                               .is_in(cross_items["ss_item_sk"].to_list()))
                 .with_columns((pl.col("ss_pricing_quantity") *
@@ -1612,12 +1604,10 @@ def get_tpcds_query_nodes(job_num = 1):
 
         last_year = ExecutionNode("last_year",
             lambda ss_base, cross_items, avg_sales: ss_base
-                .filter(pl.col("d_week_seq") > tablereader
+                .filter(pl.col("d_week_seq").is_in(tablereader
                                                     .read_table("date")
                                      .filter(pl.col("d_year") == 1999)
-                                     .filter(pl.col("d_moy") == 12)
-                                     .filter(pl.col("d_dom") == 11)
-                                     ["d_week_seq"].to_list()[0])
+                                     ["d_week_seq"].to_list()))
                 .filter(pl.col("ss_sold_item_sk")
                               .is_in(cross_items["ss_item_sk"].to_list()))
                 .with_columns((pl.col("ss_pricing_quantity") *

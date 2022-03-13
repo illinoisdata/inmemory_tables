@@ -22,6 +22,9 @@ if __name__ == '__main__':
     execution_nodes, tablereader = get_tpcds_query_nodes(
         job_num = int(args.job))
 
+    blyat = tablereader.read_table("item")
+    print(Counter(list(blyat["i_color"])))
+
     print("number of nodes:", len(execution_nodes))
 
     # Create graph & add nodes

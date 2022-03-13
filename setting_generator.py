@@ -59,6 +59,8 @@ if __name__ == '__main__':
             execution_order_method = execution_order_method,
             debug = False)
 
+        # print(execution_graph.store_in_memory)
+
         print("optimize: ", store_nodes_method, execution_order_method,
               prev_time_save, computation_time)
 
