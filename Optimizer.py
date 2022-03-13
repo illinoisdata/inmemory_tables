@@ -35,7 +35,7 @@ class Optimizer(object):
                 execution_order = self.execution_graph.execution_order,
                 node_scores = self.node_scores,
                 node_sizes = self.node_sizes,
-                nodes_to_exclude = self.nodes_to_exclude,
+                nodes_to_exclude = self.execution_graph.outputs,
                 debug = debug)
 
         if method == "none":

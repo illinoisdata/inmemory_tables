@@ -22,9 +22,6 @@ if __name__ == '__main__':
     execution_nodes, tablereader = get_tpcds_query_nodes(
         job_num = int(args.job))
 
-    blyat = tablereader.read_table("item")
-    print(Counter(list(blyat["i_color"])))
-
     print("number of nodes:", len(execution_nodes))
 
     # Create graph & add nodes
@@ -35,7 +32,7 @@ if __name__ == '__main__':
     # Dry run; store no nodes in memory
     execution_graph.execute(debug = False)
 
-    tablereader.report()
+    tablereader.report(debug= True)
     tablereader.clear()
 
     files = glob.glob('disk/*')

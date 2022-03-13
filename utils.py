@@ -30,8 +30,12 @@ Default serialization function for ExecutionNode if none is provided.
 Stores a polars table using parquet.
 """
 def parquet_result(result, filename, location = 'disk/', use_pyarrow = False):
-    result.to_parquet(open(location + filename + '.parquet', 'wb'),
-                      use_pyarrow = use_pyarrow)
+    try:
+        result.to_parquet(open(location + filename + '.parquet', 'wb'),
+                          use_pyarrow = use_pyarrow)
+    except:
+        result.to_parquet(open(location + filename + '.parquet', 'wb'),
+                          use_pyarrow = True)
     
 """
 Default deserialization function for ExecutionNode if none is provided.
