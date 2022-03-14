@@ -27,7 +27,7 @@ if __name__ == '__main__':
     execution_graph.build_graph(draw_graph = False)
 
     # Dry run; store no nodes in memory
-    execution_graph.execute(debug = False)
+    execution_graph.execute(debug = True)
 
     tablereader.report()
     tablereader.clear()
