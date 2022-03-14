@@ -15,10 +15,11 @@ class TableReader(object):
         self.table_read_times = defaultdict(int)
         self.table_read_num_times = defaultdict(int)
 
-    def read_table(self, table_name):
+    def read_table(self, table_name, columns = None):
         start = time.time()
 
-        table = unparquet_result(table_name, location = 'tpcds/')
+        table = unparquet_result(table_name, location = 'tpcds/',
+                                 columns = columns)
         
         table_read_time = time.time() - start
         self.table_read_times[table_name] += table_read_time

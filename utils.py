@@ -41,8 +41,9 @@ def parquet_result(result, filename, location = 'disk/', use_pyarrow = False):
 Default deserialization function for ExecutionNode if none is provided.
 Loads a polars table using parquet.
 """
-def unparquet_result(filename, location = 'disk/'):
-    return pl.read_parquet(open(location + filename + '.parquet', 'rb'))    
+def unparquet_result(filename, location = 'disk/', columns = None):
+    return pl.read_parquet(open(location + filename + '.parquet', 'rb'),
+                           columns = columns)    
 
 """
 Average of a list.
