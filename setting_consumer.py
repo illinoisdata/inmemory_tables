@@ -39,7 +39,7 @@ if __name__ == '__main__':
     # Dry run; store no nodes in memory
     execution_time_counter, time_to_deserialize_counter, \
     time_to_serialize_counter, peak_memory_usage_counter = \
-    execution_graph.execute(debug = True)
+    execution_graph.execute(debug = False)
 
     total_read_time = tablereader.report()
 
