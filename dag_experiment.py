@@ -86,7 +86,9 @@ if __name__ == '__main__':
 
             print(setting, computation_time, prev_time_save)
 
-    pickle.dump(result_dicts, "results/result_dicts_" + args.nodes +
-                "_" + args.memory + ".pickle", "wb")
+    store_location = "results/result_dicts_" + args.nodes + \
+                     "_" + args.memory + ".pickle"
+
+    pickle.dump(result_dicts, open(store_location, "wb"))
 
         
