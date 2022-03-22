@@ -61,15 +61,17 @@ if __name__ == '__main__':
             execution_graph.execution_order = default_order
             execution_graph.store_in_memory = set()
 
+            """
             if store_nodes_method == "mkp" and execution_order_method == "both":
                 debug = True
             else:
                 debug = False
+            """
                 
             prev_time_save, _, computation_time = optimizer.optimize(
                 store_nodes_method = store_nodes_method,
                 execution_order_method = execution_order_method,
-                debug = debug)
+                debug = False)
 
             result_dicts[setting[0] + ' ' + setting[1]]["computation_time"]\
                                     .append(computation_time)
