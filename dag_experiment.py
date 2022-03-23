@@ -29,15 +29,18 @@ if __name__ == '__main__':
         result_dicts[setting[0] + ' ' + setting[1]] = defaultdict(list)
 
     existing_iters = 0
-    myfile = open("results/result_dicts_" + args.nodes + \
-                     "_" + args.memory + ".txt", "r")
-    for line in myfile.readlines():
-        try:
-            temp = int(line)
-            if temp > existing_iters:
-                existing_iters = temp
-        except:
-            pass
+    try:
+        myfile = open("results/result_dicts_" + args.nodes + \
+                         "_" + args.memory + ".txt", "r")
+        for line in myfile.readlines():
+            try:
+                temp = int(line)
+                if temp > existing_iters:
+                    existing_iters = temp
+            except:
+                pass
+    except:
+        pass
             
 
     nx_graphs = run_dag_experiments(int(args.nodes),
