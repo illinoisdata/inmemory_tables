@@ -43,13 +43,14 @@ if __name__ == '__main__':
         pass
             
 
-    nx_graphs = run_dag_experiments(int(args.nodes),
-                                    int(args.iters) - existing_iters - 1)
+    #nx_graphs = run_dag_experiments(int(args.nodes),
+    #                                int(args.iters) - existing_iters - 1)
         
     for i in range(existing_iters + 1, int(args.iters)):
         if i % 1 == 0:
             print(i, "---------------------------------")
-        nx_graph = nx_graphs[i]
+        #nx_graph = nx_graphs[i - existing_iters - 1]
+        nx_graph = run_dag_experiments(int(args.nodes), 1)[0]
         execution_graph = ExecutionGraph()
         for node_id in range(len(nx_graph["parents"])):
             execution_graph.add_nodes(ExecutionNode(
