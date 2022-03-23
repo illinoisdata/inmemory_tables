@@ -28,9 +28,22 @@ if __name__ == '__main__':
     for setting in settings:
         result_dicts[setting[0] + ' ' + setting[1]] = defaultdict(list)
 
-    nx_graphs = run_dag_experiments(int(args.nodes), int(args.iters))
+    existing_iters = 0
+    myfile = open("results/result_dicts_" + args.nodes + \
+                     "_" + args.memory + ".txt", "r")
+    for line in myfile.readlines():
+        try:
+            temp = int(line)
+            if temp > existing_iters:
+                existing_iters = temp
+        except:
+            pass
+            
+
+    nx_graphs = run_dag_experiments(int(args.nodes),
+                                    int(args.iters) - existing_iters - 1)
         
-    for i in range(len(nx_graphs)):
+    for i in range(existing_iters + 1, int(args.iters)):
         if i % 1 == 0:
             print(i, "---------------------------------")
         nx_graph = nx_graphs[i]
@@ -86,9 +99,26 @@ if __name__ == '__main__':
 
             print(setting, computation_time, prev_time_save)
 
-    store_location = "results/result_dicts_" + args.nodes + \
-                     "_" + args.memory + ".pickle"
-
-    pickle.dump(result_dicts, open(store_location, "wb"))
+        myfile = open("results/result_dicts_" + args.nodes + \
+                     "_" + args.memory + ".txt", "a")
+        myfile.write(str(i) + "\n")
+        for setting in settings:
+            myfile.write(setting[0] + ' ' + setting[1] + " " +
+                     "computation_time" + " " +
+                     str(result_dicts[setting[0] + ' ' + setting[1]]
+                         ["computation_time"][-1]) + "\n")
+            myfile.write(setting[0] + ' ' + setting[1] + " " +
+                     "time save score" + " " +
+                     str(result_dicts[setting[0] + ' ' + setting[1]]
+                         ["time save score"][-1]) + "\n")
+            myfile.write(setting[0] + ' ' + setting[1] + " " +
+                     "save time" + " " +
+                     str(result_dicts[setting[0] + ' ' + setting[1]]
+                         ["save time"][-1]) + "\n")
+            myfile.write(setting[0] + ' ' + setting[1] + " " +
+                     "load time" + " " +
+                     str(result_dicts[setting[0] + ' ' + setting[1]]
+                         ["load time"][-1]) + "\n")
+        myfile.close()
 
         
