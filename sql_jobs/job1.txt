@@ -1,4 +1,4 @@
-CREATE TABLE salesreturns1 AS(
+CREATE TABLE salesreturns1 WITH (format = 'PARQUET') AS(
 select  ss_sold_store_sk as store_sk,
 				ss_sold_date_sk  as date_sk,
 				ss_pricing_ext_sales_price as sales_price,
@@ -14,9 +14,9 @@ select  ss_sold_store_sk as store_sk,
 			   sr_pricing_reversed_charge as return_amt,
 			   sr_pricing_net_loss as net_loss
 		from store_returns
-) STORED AS PARQUET;
+);
 
-CREATE TABLE ssr AS(
+CREATE TABLE ssr WITH (format = 'PARQUET') AS(
 	select w_store_id,
 			sum(sales_price) as sales,
 			sum(profit) as profit,
@@ -30,9 +30,9 @@ CREATE TABLE ssr AS(
 		   and d_month_seq = 1207
 		   and store_sk = w_store_sk
 	 group by w_store_id
-) STORED AS PARQUET;
+);
 
-CREATE TABLE salesreturns2 AS(
+CREATE TABLE salesreturns2 WITH (format = 'PARQUET') AS(
 	select  cs_catalog_page_sk as page_sk,
 					cs_sold_date_sk  as date_sk,
 					cs_pricing_ext_sales_price as sales_price,
@@ -48,9 +48,9 @@ CREATE TABLE salesreturns2 AS(
 				   cr_pricing_reversed_charge as return_amt,
 				   cr_pricing_net_loss as net_loss
 			from catalog_returns
-) STORED AS PARQUET;
+);
 
-CREATE TABLE csr AS(
+CREATE TABLE csr WITH (format = 'PARQUET') AS(
 		select cp_catalog_page_id,
 			sum(sales_price) as sales,
 			sum(profit) as profit,
@@ -64,9 +64,9 @@ CREATE TABLE csr AS(
 		   and d_month_seq = 1207
 		   and page_sk = cp_catalog_page_sk
 	 group by cp_catalog_page_id
-) STORED AS PARQUET;
+);
 
-CREATE TABLE salesreturns3 AS(
+CREATE TABLE salesreturns3 WITH (format = 'PARQUET') AS(
  select  ws_web_site_sk as wsr_web_site_sk,
             ws_sold_date_sk  as date_sk,
             ws_pricing_ext_sales_price as sales_price,
@@ -85,9 +85,9 @@ CREATE TABLE salesreturns3 AS(
          ( wr_item_sk = ws_item_sk
            and wr_order_number = ws_order_number)
    
-) STORED AS PARQUET;
+);
 
-CREATE TABLE wsr AS(
+CREATE TABLE wsr WITH (format = 'PARQUET') AS(
 select web_site_id,
         sum(sales_price) as sales,
         sum(profit) as profit,
@@ -101,9 +101,9 @@ select web_site_id,
        and d_month_seq = 1207
        and wsr_web_site_sk = web_site_sk
  group by web_site_id
-) STORED AS PARQUET;
+);
 
-CREATE TABLE x1 AS(
+CREATE TABLE x1 WITH (format = 'PARQUET') AS(
 select 'store channel' as channel
         , 'store' || w_store_id as id
         , sales
@@ -124,9 +124,9 @@ select 'store channel' as channel
         , returns
         , (profit - profit_loss) as profit
  from   wsr
-) STORED AS PARQUET;
+);
 
-CREATE TABLE query5_result AS(
+CREATE TABLE query5_result WITH (format = 'PARQUET') AS(
  select channel
         , id
         , sum(sales) as sales
@@ -138,10 +138,10 @@ CREATE TABLE query5_result AS(
  order by channel
          ,id
  limit 100
-) STORED AS PARQUET;
+);
 
 
-CREATE TABLE ss AS(
+CREATE TABLE ss WITH (format = 'PARQUET') AS(
 select w_store_sk,
          sum(ss_pricing_ext_sales_price) as sales,
          sum(ss_pricing_net_profit) as profit
@@ -152,9 +152,9 @@ select w_store_sk,
        and d_month_seq = 1207 
        and ss_sold_store_sk = w_store_sk
  group by w_store_sk
-) STORED AS PARQUET;
+);
 
-CREATE TABLE sr AS(
+CREATE TABLE sr WITH (format = 'PARQUET') AS(
 select w_store_sk,
          sum(sr_pricing_reversed_charge) as returns,
          sum(sr_pricing_net_loss) as profit_loss
@@ -165,9 +165,9 @@ select w_store_sk,
        and d_month_seq = 1207
        and sr_store_sk = w_store_sk
  group by w_store_sk
-) STORED AS PARQUET;
+);
 
-CREATE TABLE cs AS(
+CREATE TABLE cs WITH (format = 'PARQUET') AS(
 select cs_call_center_sk,
         sum(cs_pricing_ext_sales_price) as sales,
         sum(cs_pricing_net_profit) as profit
@@ -176,9 +176,9 @@ select cs_call_center_sk,
  where cs_sold_date_sk = d_date_sk
        and d_month_seq = 1207
  group by cs_call_center_sk 
-) STORED AS PARQUET;
+);
 
-CREATE TABLE cr AS(
+CREATE TABLE cr WITH (format = 'PARQUET') AS(
 select cr_call_center_sk,
          sum(cr_pricing_reversed_charge) as returns,
          sum(cr_pricing_net_loss) as profit_loss
@@ -187,9 +187,9 @@ select cr_call_center_sk,
  where cr_returned_date_sk = d_date_sk
        and d_month_seq = 1207
  group by cr_call_center_sk
-) STORED AS PARQUET;
+);
 
-CREATE TABLE ws AS(
+CREATE TABLE ws WITH (format = 'PARQUET') AS(
 select wp_page_sk,
         sum(ws_pricing_ext_sales_price) as sales,
         sum(ws_pricing_net_profit) as profit
@@ -200,9 +200,9 @@ select wp_page_sk,
        and d_month_seq = 1207
        and ws_web_page_sk = wp_page_sk
  group by wp_page_sk
-) STORED AS PARQUET;
+);
 
-CREATE TABLE wr AS(
+CREATE TABLE wr WITH (format = 'PARQUET') AS(
 select wp_page_sk,
         sum(wr_pricing_reversed_charge) as returns,
         sum(wr_pricing_net_loss) as profit_loss
@@ -213,9 +213,9 @@ select wp_page_sk,
        and d_month_seq = 1207
        and wr_web_page_sk = wp_page_sk
  group by wp_page_sk
-) STORED AS PARQUET;
+);
 
-CREATE TABLE x2 AS(
+CREATE TABLE x2 WITH (format = 'PARQUET') AS(
 select 'store channel' as channel
         , ss.w_store_sk as id
         , sales
@@ -240,9 +240,9 @@ select 'store channel' as channel
  from   ws left join wr
         on  ws.wp_page_sk = wr.wp_page_sk
  
-) STORED AS PARQUET;
+);
 
-CREATE TABLE query77_result AS(
+CREATE TABLE query77_result WITH (format = 'PARQUET') AS(
  select channel
         , id
         , sum(sales) as sales
@@ -254,9 +254,9 @@ CREATE TABLE query77_result AS(
  order by channel
          ,id
  limit 100
-) STORED AS PARQUET;
+);
 
-CREATE TABLE ssr2 AS(
+CREATE TABLE ssr2 WITH (format = 'PARQUET') AS(
 select  w_store_id as store_id,
           sum(ss_pricing_ext_sales_price) as sales,
           sum(coalesce(sr_pricing_reversed_charge, 0)) as returns,
@@ -275,9 +275,9 @@ select  w_store_id as store_id,
        and ss_sold_promo_sk = p_promo_sk
        and p_channel_tv = 'N'
  group by w_store_id
-) STORED AS PARQUET;
+);
 
-CREATE TABLE csr2 AS(
+CREATE TABLE csr2 WITH (format = 'PARQUET') AS(
 select  cp_catalog_page_id as catalog_page_id,
           sum(cs_pricing_ext_sales_price) as sales,
           sum(coalesce(cr_pricing_reversed_charge, 0)) as returns,
@@ -296,9 +296,9 @@ select  cp_catalog_page_id as catalog_page_id,
        and cs_promo_sk = p_promo_sk
        and p_channel_tv = 'N'
 group by cp_catalog_page_id
-) STORED AS PARQUET;
+);
 
-CREATE TABLE wsr2 AS(
+CREATE TABLE wsr2 WITH (format = 'PARQUET') AS(
 select  web_site_id,
           sum(ws_pricing_ext_sales_price) as sales,
           sum(coalesce(wr_pricing_reversed_charge, 0)) as returns,
@@ -317,9 +317,9 @@ select  web_site_id,
        and ws_promo_sk = p_promo_sk
        and p_channel_tv = 'N'
 group by web_site_id
-) STORED AS PARQUET;
+);
 
-CREATE TABLE x3 AS(
+CREATE TABLE x3 WITH (format = 'PARQUET') AS(
 select 'store channel' as channel
         , 'store' || store_id as id
         , sales
@@ -340,9 +340,9 @@ select 'store channel' as channel
         , returns
         , profit
  from   wsr2
-) STORED AS PARQUET;
+);
 
-CREATE TABLE query80_result AS(
+CREATE TABLE query80_result WITH (format = 'PARQUET') AS(
  select channel
         , id
         , sum(sales) as sales
@@ -354,5 +354,5 @@ CREATE TABLE query80_result AS(
  order by channel
          ,id
  limit 100
-) STORED AS PARQUET;
+);
 
