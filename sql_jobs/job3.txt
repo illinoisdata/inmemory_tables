@@ -12,13 +12,13 @@ select sold_date_sk
 
 CREATE TABLE wswscs AS(
 select d_week_seq,
-        sum(case when (d_day_name='Sunday') then sales_price else null end) sun_sales,
-        sum(case when (d_day_name='Monday') then sales_price else null end) mon_sales,
-        sum(case when (d_day_name='Tuesday') then sales_price else  null end) tue_sales,
-        sum(case when (d_day_name='Wednesday') then sales_price else null end) wed_sales,
-        sum(case when (d_day_name='Thursday') then sales_price else null end) thu_sales,
-        sum(case when (d_day_name='Friday') then sales_price else null end) fri_sales,
-        sum(case when (d_day_name='Saturday') then sales_price else null end) sat_sales
+        sum(case when (d_day_name='Sunday') then sales_price else null end) as sun_sales,
+        sum(case when (d_day_name='Monday') then sales_price else null end) as mon_sales,
+        sum(case when (d_day_name='Tuesday') then sales_price else  null end) as tue_sales,
+        sum(case when (d_day_name='Wednesday') then sales_price else null end) as wed_sales,
+        sum(case when (d_day_name='Thursday') then sales_price else null end) as thu_sales,
+        sum(case when (d_day_name='Friday') then sales_price else null end) as fri_sales,
+        sum(case when (d_day_name='Saturday') then sales_price else null end) as sat_sales
  from wscs
      ,date_dim
  where d_date_sk = sold_date_sk
@@ -26,28 +26,28 @@ select d_week_seq,
 );
 
 CREATE TABLE y_q2 AS(
-select wswscs.d_week_seq d_week_seq1
-        ,sun_sales sun_sales1
-        ,mon_sales mon_sales1
-        ,tue_sales tue_sales1
-        ,wed_sales wed_sales1
-        ,thu_sales thu_sales1
-        ,fri_sales fri_sales1
-        ,sat_sales sat_sales1
+select wswscs.d_week_seq as d_week_seq1
+        ,sun_sales as sun_sales1
+        ,mon_sales as mon_sales1
+        ,tue_sales as tue_sales1
+        ,wed_sales as wed_sales1
+        ,thu_sales as thu_sales1
+        ,fri_sales as fri_sales1
+        ,sat_sales as sat_sales1
   from wswscs,date_dim 
   where date_dim.d_week_seq = wswscs.d_week_seq and
         d_year = 2001
 );
 
 CREATE TABLE z_q2 AS(
-select wswscs.d_week_seq d_week_seq2
-        ,sun_sales sun_sales2
-        ,mon_sales mon_sales2
-        ,tue_sales tue_sales2
-        ,wed_sales wed_sales2
-        ,thu_sales thu_sales2
-        ,fri_sales fri_sales2
-        ,sat_sales sat_sales2
+select wswscs.d_week_seq as d_week_seq2
+        ,sun_sales as sun_sales2
+        ,mon_sales as mon_sales2
+        ,tue_sales as tue_sales2
+        ,wed_sales as wed_sales2
+        ,thu_sales as thu_sales2
+        ,fri_sales as fri_sales2
+        ,sat_sales as sat_sales2
   from wswscs
       ,date_dim 
   where date_dim.d_week_seq = wswscs.d_week_seq and
@@ -72,24 +72,24 @@ CREATE TABLE query2_result AS(
 CREATE TABLE wss AS(
 select d_week_seq,
         ss_sold_store_sk,
-        sum(case when (d_day_name='Sunday') then ss_pricing_sales_price else null end) sun_sales,
-        sum(case when (d_day_name='Monday') then ss_pricing_sales_price else null end) mon_sales,
-        sum(case when (d_day_name='Tuesday') then ss_pricing_sales_price else  null end) tue_sales,
-        sum(case when (d_day_name='Wednesday') then ss_pricing_sales_price else null end) wed_sales,
-        sum(case when (d_day_name='Thursday') then ss_pricing_sales_price else null end) thu_sales,
-        sum(case when (d_day_name='Friday') then ss_pricing_sales_price else null end) fri_sales,
-        sum(case when (d_day_name='Saturday') then ss_pricing_sales_price else null end) sat_sales
+        sum(case when (d_day_name='Sunday') then ss_pricing_sales_price else null end) as sun_sales,
+        sum(case when (d_day_name='Monday') then ss_pricing_sales_price else null end) as mon_sales,
+        sum(case when (d_day_name='Tuesday') then ss_pricing_sales_price else  null end) as tue_sales,
+        sum(case when (d_day_name='Wednesday') then ss_pricing_sales_price else null end) as wed_sales,
+        sum(case when (d_day_name='Thursday') then ss_pricing_sales_price else null end) as thu_sales,
+        sum(case when (d_day_name='Friday') then ss_pricing_sales_price else null end) as fri_sales,
+        sum(case when (d_day_name='Saturday') then ss_pricing_sales_price else null end) as sat_sales
  from store_sales,date_dim
  where d_date_sk = ss_sold_date_sk
  group by d_week_seq,ss_sold_store_sk
 );
 
 CREATE TABLE y_q59 AS(
-select w_store_name w_store_name1,wss.d_week_seq d_week_seq1
-        ,w_store_id w_store_id1,sun_sales sun_sales1
-        ,mon_sales mon_sales1,tue_sales tue_sales1
-        ,wed_sales wed_sales1,thu_sales thu_sales1
-        ,fri_sales fri_sales1,sat_sales sat_sales1
+select w_store_name as w_store_name1,wss.d_week_seq as d_week_seq1
+        ,w_store_id as w_store_id1,sun_sales as sun_sales1
+        ,mon_sales as mon_sales1,tue_sales as tue_sales1
+        ,wed_sales as wed_sales1,thu_sales as thu_sales1
+        ,fri_sales as fri_sales1,sat_sales as sat_sales1
   from wss,store,date_dim d
   where d.d_week_seq = wss.d_week_seq and
         ss_sold_store_sk = w_store_sk and 
@@ -97,11 +97,11 @@ select w_store_name w_store_name1,wss.d_week_seq d_week_seq1
 );
 
 CREATE TABLE x_q59 AS(
-select w_store_name w_store_name2,wss.d_week_seq d_week_seq2
-        ,w_store_id w_store_id2,sun_sales sun_sales2
-        ,mon_sales mon_sales2,tue_sales tue_sales2
-        ,wed_sales wed_sales2,thu_sales thu_sales2
-        ,fri_sales fri_sales2,sat_sales sat_sales2
+select w_store_name as w_store_name2,wss.d_week_seq as d_week_seq2
+        ,w_store_id as w_store_id2,sun_sales as sun_sales2
+        ,mon_sales as mon_sales2,tue_sales as tue_sales2
+        ,wed_sales as wed_sales2,thu_sales as thu_sales2
+        ,fri_sales as fri_sales2,sat_sales as sat_sales2
   from wss,store,date_dim d
   where d.d_week_seq = wss.d_week_seq and
         ss_sold_store_sk = w_store_sk and 
@@ -122,9 +122,9 @@ limit 100
 );
 
 CREATE TABLE year_total AS(
-select c_customer_id customer_id
-       ,c_first_name customer_first_name
-       ,c_last_name customer_last_name
+select c_customer_id as customer_id
+       ,c_first_name as customer_first_name
+       ,c_last_name as customer_last_name
        ,d_year as year
        ,sum(ss_pricing_net_paid) year_total
        ,'s' sale_type
@@ -139,9 +139,9 @@ select c_customer_id customer_id
          ,c_last_name
          ,d_year
  union all
- select c_customer_id customer_id
-       ,c_first_name customer_first_name
-       ,c_last_name customer_last_name
+ select c_customer_id as customer_id
+       ,c_first_name as customer_first_name
+       ,c_last_name as customer_last_name
        ,d_year as year
        ,sum(ws_pricing_net_paid) year_total
        ,'w' sale_type
