@@ -19,7 +19,7 @@ if __name__ == '__main__':
     parser.add_argument("-I", "--iters", help="Number of iterations to run")
     args = parser.parse_args()
 
-    with open("results/baselines.txt") as file:
+    with open("results/baselines2.txt") as file:
         settings = [line.rstrip().split() for line in file]
     file.close()
 
