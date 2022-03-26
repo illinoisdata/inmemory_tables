@@ -7,7 +7,7 @@ select sold_date_sk
         union all
         select cs_sold_date_sk sold_date_sk
               ,cs_pricing_ext_sales_price sales_price
-        from catalog_sales)
+        from catalog_sales) as aaa
 );
 
 CREATE TABLE wswscs AS(
