@@ -56,13 +56,13 @@ select wswscs.d_week_seq as d_week_seq2
 
 CREATE TABLE query2_result AS(
  select d_week_seq1
-       ,round(sun_sales1/sun_sales2,2) AS ratio1
-       ,round(mon_sales1/mon_sales2,2)AS ratio2
-       ,round(tue_sales1/tue_sales2,2)AS ratio3
-       ,round(wed_sales1/wed_sales2,2)AS ratio4
-       ,round(thu_sales1/thu_sales2,2)AS ratio5
-       ,round(fri_sales1/fri_sales2,2)AS ratio6
-       ,round(sat_sales1/sat_sales2,2)AS ratio7
+       ,sun_sales1/sun_sales2 AS ratio1
+       ,mon_sales1/mon_sales2 AS ratio2
+       ,tue_sales1/tue_sales2 AS ratio3
+       ,wed_sales1/wed_sales2 AS ratio4
+       ,thu_sales1/thu_sales2 AS ratio5
+       ,fri_sales1/fri_sales2 AS ratio6
+       ,sat_sales1/sat_sales2 AS ratio7
  from
  y_q2, z_q2
  where d_week_seq1=d_week_seq2-53
@@ -126,7 +126,7 @@ select c_customer_id as customer_id
        ,c_first_name as customer_first_name
        ,c_last_name as customer_last_name
        ,d_year as year
-       ,sum(ss_pricing_net_paid) year_total
+       ,sum(ss_pricing_net_paid) as year_total
        ,'s' sale_type
  from customer
      ,store_sales
@@ -143,7 +143,7 @@ select c_customer_id as customer_id
        ,c_first_name as customer_first_name
        ,c_last_name as customer_last_name
        ,d_year as year
-       ,sum(ws_pricing_net_paid) year_total
+       ,sum(ws_pricing_net_paid) as year_total
        ,'w' sale_type
  from customer
      ,web_sales
