@@ -169,12 +169,12 @@ CREATE TABLE t_s_secyear AS(
 
 CREATE TABLE t_w_firstyear AS(
 	select * from year_total WHERE
-	sale_type = '2' and year = 2000 and year_total > 0
+	sale_type = 'w' and year = 2000 and year_total > 0
 );
 
 CREATE TABLE t_w_secyear AS(
 	select * from year_total WHERE
-	sale_type = '2' and year = 2001
+	sale_type = 'w' and year = 2001
 );
 
 CREATE TABLE query74_result AS(
