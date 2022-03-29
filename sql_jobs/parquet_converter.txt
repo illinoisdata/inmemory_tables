@@ -1,0 +1,15 @@
+create table store_sales with (format = 'PARQUET') as (select * from store_sales_temp);
+create table store_returns with (format = 'PARQUET') as (select * from store_returns_temp);
+create table catalog_sales with (format = 'PARQUET') as (select * from catalog_sales_temp);
+create table catalog_returns with (format = 'PARQUET') as (select * from catalog_returns_temp);
+create table web_sales with (format = 'PARQUET') as (select * from web_sales_temp);
+create table web_returns with (format = 'PARQUET') as (select * from web_returns_temp);
+create table date_dim with (format = 'PARQUET') as (select * from date_dim_temp);
+create table store with (format = 'PARQUET') as (select * from store_temp);
+create table catalog_page with (format = 'PARQUET') as (select * from catalog_page_temp);
+create table web_site with (format = 'PARQUET') as (select * from web_site_temp);
+create table web_page with (format = 'PARQUET') as (select * from web_page_temp);
+create table item with (format = 'PARQUET') as (select * from item_temp);
+create table promotion with (format = 'PARQUET') as (select * from promotion_temp);
+create table customer_address with (format = 'PARQUET') as (select * from customer_address_temp);
+create table customer with (format = 'PARQUET') as (select * from customer_temp);
