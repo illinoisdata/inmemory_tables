@@ -31,10 +31,10 @@ Stores a polars table using parquet.
 """
 def parquet_result(result, filename, location = 'disk/', use_pyarrow = False):
     try:
-        result.to_parquet(open(location + filename + '.parquet', 'wb'),
+        result.write_parquet(open(location + filename + '.parquet', 'wb'),
                           use_pyarrow = use_pyarrow)
     except:
-        result.to_parquet(open(location + filename + '.parquet', 'wb'),
+        result.write_parquet(open(location + filename + '.parquet', 'wb'),
                           use_pyarrow = True)
     
 """

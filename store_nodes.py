@@ -285,7 +285,7 @@ def mkp(graph, execution_order, node_scores, node_sizes, nodes_to_exclude,
     capacities = [memory_limit for i in range(len(maximal_sets))]
 
     # Initialize Google MKP solver
-    print("solving knapsack")
+    # print("solving knapsack")
     solver = pywrapknapsack_solver.KnapsackSolver(
           pywrapknapsack_solver.KnapsackSolver
               .KNAPSACK_MULTIDIMENSION_SCIP_MIP_SOLVER ,
@@ -293,7 +293,7 @@ def mkp(graph, execution_order, node_scores, node_sizes, nodes_to_exclude,
     solver.Init(profits, weights, capacities)
     solver.set_time_limit(10)
     time_save = solver.Solve()
-    print("knapsack done")
+    # print("knapsack done")
 
     # Gather nodes to store in memory
     for i in range(len(vector_nodes)):
