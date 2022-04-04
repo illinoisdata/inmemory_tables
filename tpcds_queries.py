@@ -1467,15 +1467,16 @@ def get_tpcds_query_nodes(job_num = 1):
             ["ss_base"], tablereader)
 
         in_cat = ExecutionNode("in_cat",
-            lambda: tablereader.read_table("catalog_sales")
+            lambda: tablereader.read_table("catalog_sales",
+                                           ["cs_order_number",
+                                            "cs_sold_item_sk",
+                                            "cs_sold_date_sk",
+                                            "cs_pricing_quantity",
+                                            "cs_pricing_net_paid",
+                                            "cs_pricing_net_profit"])
                 .filter(pl.col("cs_pricing_net_profit") > 1)
                 .filter(pl.col("cs_pricing_quantity") > 0)
                 .filter(pl.col("cs_pricing_net_paid") > 0)
-                .select([pl.col("cs_order_number"),
-                         pl.col("cs_sold_item_sk"),
-                         pl.col("cs_sold_date_sk"),
-                         pl.col("cs_pricing_quantity"),
-                         pl.col("cs_pricing_net_paid")])
                 .join(tablereader.read_table("catalog_returns",
                                              ["cr_order_number", "cr_item_sk",
                                               "cr_pricing_quantity",
@@ -1499,15 +1500,16 @@ def get_tpcds_query_nodes(job_num = 1):
             [], tablereader)
 
         in_web = ExecutionNode("in_web",
-            lambda: tablereader.read_table("web_sales")
+            lambda: tablereader.read_table("web_sales",
+                                           ["ws_order_number",
+                                            "ws_item_sk",
+                                            "ws_sold_date_sk",
+                                            "ws_pricing_quantity",
+                                            "ws_pricing_net_paid",
+                                            "ws_pricing_net_profit"])
                 .filter(pl.col("ws_pricing_net_profit") > 1)
                 .filter(pl.col("ws_pricing_quantity") > 0)
                 .filter(pl.col("ws_pricing_net_paid") > 0)
-                .select([pl.col("ws_order_number"),
-                         pl.col("ws_item_sk"),
-                         pl.col("ws_sold_date_sk"),
-                         pl.col("ws_pricing_quantity"),
-                         pl.col("ws_pricing_net_paid")])
                 .join(tablereader.read_table("web_returns",
                                              ["wr_order_number", "wr_item_sk",
                                               "wr_pricing_quantity",
