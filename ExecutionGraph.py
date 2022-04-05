@@ -37,9 +37,6 @@ class ExecutionGraph(object):
         # Queue & thread for multithreaded serialization of in-memory tables.
         self.mt_queue = queue.Queue()
         self.mt_thread = None
-
-        # Exeperimental
-        self.mt_threads = []
         
     """
     Add nodes to the graph.
@@ -139,15 +136,7 @@ class ExecutionGraph(object):
                     
                     # Multithreaded serialization if enabled
                     if save_inmemory_tables:
-                        #self.mt_queue.put((parent_node.result, parent_name))
-
-                        # Experimental
-                        mt_thread = threading.Thread(target = parquet_result,
-                                             args = [parent_node.result,
-                                                     parent_name,
-                                                     'disk/', False])
-                        mt_thread.start()
-                        self.mt_threads.append(mt_thread)
+                        self.mt_queue.put((parent_node.result, parent_name))
                         
                     parent_node.result = None
                     
@@ -183,14 +172,11 @@ class ExecutionGraph(object):
 
         # Join multithreaded writer
         if save_inmemory_tables:
-            #self.mt_queue.put(None)
-            #self.mt_thread.join()
+            self.mt_queue.put(None)
+            self.mt_thread.join()
 
-            # Experimental
-            for thread in self.mt_threads:
-                thread.join()
-
-        print("actual total execution time:", time.time() - execution_start_time)
+        if debug:
+            print("actual total execution time:", time.time() - execution_start_time)
 
         return self.execution_time_counter, self.time_to_deserialize_counter, \
                self.time_to_serialize_counter, self.peak_memory_usage_counter
