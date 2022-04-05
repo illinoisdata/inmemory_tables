@@ -30,12 +30,8 @@ Default serialization function for ExecutionNode if none is provided.
 Stores a polars table using parquet.
 """
 def parquet_result(result, filename, location = 'disk/', use_pyarrow = False):
-    try:
-        result.write_parquet(open(location + filename + '.parquet', 'wb'),
+    result.write_parquet(open(location + filename + '.parquet', 'wb'),
                           use_pyarrow = use_pyarrow)
-    except:
-        result.write_parquet(open(location + filename + '.parquet', 'wb'),
-                          use_pyarrow = True)
     
 """
 Default deserialization function for ExecutionNode if none is provided.
@@ -141,6 +137,8 @@ Writer for concurrent serialization of in-memory tables.
 use_pyarrow is set to True to reduce the memory consumption of the thread
 calling this method.
 """
-def mt_writer(task_queue):
+def mt_writer(task_queue, timestamp = 0):
     for result, name in iter(task_queue.get, None):
-        parquet_result(result, name, use_pyarrow = True)
+        #print("mt_writer start " + name + ": " + str(time.time() - timestamp))
+        parquet_result(result, name, use_pyarrow = False)
+        #print("mt_writer end " + name + ": " + str(time.time() - timestamp))

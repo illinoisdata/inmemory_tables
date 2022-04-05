@@ -22,13 +22,13 @@ if __name__ == '__main__':
     execution_nodes, tablereader = get_tpcds_query_nodes(
         job_num = int(args.job))
 
-    web_page = tablereader.read_table("promotion")
-    a = list(web_page.columns)
-    b = list(web_page.dtypes)
-    for i in range(len(a)):
-        print(a[i], b[i])
+    #web_page = tablereader.read_table("promotion")
+    #a = list(web_page.columns)
+    #b = list(web_page.dtypes)
+    #for i in range(len(a)):
+    #    print(a[i], b[i])
 
-    print("number of nodes:", len(execution_nodes))
+    #print("number of nodes:", len(execution_nodes))
 
     # Create graph & add nodes
     execution_graph = ExecutionGraph()
@@ -57,7 +57,7 @@ if __name__ == '__main__':
     time.sleep(2)
 
     # Evaluate efficiency after optimization
-    execution_graph.execute(debug = False, save_inmemory_tables = False)
+    execution_graph.execute(debug = False, save_inmemory_tables = True)
 
     tablereader.report()
 

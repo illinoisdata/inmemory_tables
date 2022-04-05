@@ -55,6 +55,7 @@ class ExecutionNode(object):
         self.result_size_history = []
         self.time_to_serialize_history = []
         self.time_to_deserialize_history = []
+        self.timestamp = 0
 
     """
     Returns average result size if available.
@@ -104,7 +105,7 @@ class ExecutionNode(object):
     """
     def execute(self, debug = False):
         if debug:
-            print("Executing node " + self.name)
+            print("Start executing node " + self.name + ": " + str(time.time() - self.timestamp))
             
         # Check for dependencies to be fully loaded
         for k, v in self.dependencies.items():
@@ -128,7 +129,8 @@ class ExecutionNode(object):
             self.dependencies[k] = None
 
         if debug:
-            print("Node size:", self.size_function(self.result))
+            #print("Node size:", self.size_function(self.result))
+            print("Finished executing node " + self.name + ": " + str(time.time() - self.timestamp))
 
         # Record result size
         self.result_size_history.append(self.size_function(self.result))
@@ -142,8 +144,10 @@ class ExecutionNode(object):
     """
     def serialize_result(self):
         start = time.time()
+        #print("Start serializing node " + self.name + ": " + str(time.time() - self.timestamp))
         self.serialize_function(self.result, self.name)
         time_to_serialize = time.time() - start
+        #print("Finished serializing node " + self.name + ": " + str(time.time() - self.timestamp))
         
         self.result = None
 
@@ -159,8 +163,10 @@ class ExecutionNode(object):
     """
     def deserialize_result(self):
         start = time.time()
+        #print("Start deserializing node " + self.name + ": " + str(time.time() - self.timestamp))
         result_from_disk = self.deserialize_function(self.name)
         time_to_deserialize = time.time() - start
+        #print("Finished deserializing node " + self.name + ": " + str(time.time() - self.timestamp))
 
         # Record time to serialize
         self.time_to_deserialize_history.append(time_to_deserialize)

@@ -89,6 +89,9 @@ class ExecutionGraph(object):
         
         execution_start_time = time.time()
 
+        for name in self.execution_order:
+            self.node_dict[name].timestamp = execution_start_time
+
         # Keep track of number of successors for each node yet to be executed;
         # When a node stored in memory's successors have all been executed,
         # its result is garbage collected.
@@ -99,7 +102,7 @@ class ExecutionGraph(object):
         # Start multithreaded table serializer
         if save_inmemory_tables:
             self.mt_thread = threading.Thread(target = mt_writer,
-                                             args = [self.mt_queue])
+                                             args = [self.mt_queue, execution_start_time])
             self.mt_thread.start()
 
         # Run nodes in given execution order
@@ -120,7 +123,8 @@ class ExecutionGraph(object):
             status = node.execute(debug = debug)
             if status == -1:
                 return
-        
+            #if name in self.store_in_memory and save_inmemory_tables:
+            #    self.mt_queue.put((node.result, name))
             # Serialize current node to disk if not flagged for in memory
             # storage
             if name not in self.store_in_memory:
@@ -143,7 +147,8 @@ class ExecutionGraph(object):
                     self.current_memory_usage -= parent_node.get_result_size()
 
             if debug:
-                print("current memory usage:", self.current_memory_usage)
+                #print("current memory usage:", self.current_memory_usage)
+                pass
 
             # Keep track of current memory usage
             self.memory_history.append(self.current_memory_usage)
@@ -165,15 +170,18 @@ class ExecutionGraph(object):
 
         # Print metadata
         if debug:
-            print("total execution time:", self.execution_time_counter)
-            print("total load time:", self.time_to_deserialize_counter)
-            print("total save time:", self.time_to_serialize_counter)
-            print("maximum memory usage:", self.peak_memory_usage_counter)
+            pass
+        print("total execution time:", self.execution_time_counter)
+        print("total load time:", self.time_to_deserialize_counter)
+        print("total save time:", self.time_to_serialize_counter)
+        print("maximum memory usage:", self.peak_memory_usage_counter)
 
         # Join multithreaded writer
         if save_inmemory_tables:
             self.mt_queue.put(None)
             self.mt_thread.join()
+
+        print("actual total execution time:", time.time() - execution_start_time)
 
         return self.execution_time_counter, self.time_to_deserialize_counter, \
                self.time_to_serialize_counter, self.peak_memory_usage_counter
