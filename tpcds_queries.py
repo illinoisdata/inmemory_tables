@@ -1447,11 +1447,11 @@ def get_tpcds_query_nodes(job_num = 1):
                 .join(tablereader.read_table("store_returns",
                                              ["sr_ticket_number", "sr_item_sk",
                                               "sr_pricing_quantity",
-                                              "sr_pricing_reversed_charge"]),
+                                              "sr_pricing_reversed_charge"])
+                      .filter(pl.col("sr_pricing_reversed_charge") > 1),
                       left_on = ["ss_ticket_number", "ss_sold_item_sk"],
                       right_on = ["sr_ticket_number", "sr_item_sk"],
                       how = "left")
-                .filter(pl.col("sr_pricing_reversed_charge") > 1)
                 .fill_null(0)
                 .join(tablereader.read_table("date", ["d_year", "d_date_sk"])
                       .filter(pl.col("d_year") == 2001),
@@ -1480,11 +1480,11 @@ def get_tpcds_query_nodes(job_num = 1):
                 .join(tablereader.read_table("catalog_returns",
                                              ["cr_order_number", "cr_item_sk",
                                               "cr_pricing_quantity",
-                                              "cr_pricing_reversed_charge"]),
+                                              "cr_pricing_reversed_charge"])
+                      .filter(pl.col("cr_pricing_reversed_charge") > 1),
                       left_on = ["cs_order_number", "cs_sold_item_sk"],
                       right_on = ["cr_order_number", "cr_item_sk"],
                       how = "left")
-                .filter(pl.col("cr_pricing_reversed_charge") > 1)
                 .fill_null(0)
                 .join(tablereader.read_table("date", ["d_year", "d_date_sk"])
                       .filter(pl.col("d_year") == 2001),
@@ -1513,11 +1513,11 @@ def get_tpcds_query_nodes(job_num = 1):
                 .join(tablereader.read_table("web_returns",
                                              ["wr_order_number", "wr_item_sk",
                                               "wr_pricing_quantity",
-                                              "wr_pricing_reversed_charge"]),
+                                              "wr_pricing_reversed_charge"])
+                      .filter(pl.col("wr_pricing_reversed_charge") > 1),
                       left_on = ["ws_order_number", "ws_item_sk"],
                       right_on = ["wr_order_number", "wr_item_sk"],
                       how = "left")
-                .filter(pl.col("wr_pricing_reversed_charge") > 1)
                 .fill_null(0)
                 .join(tablereader.read_table("date", ["d_year", "d_date_sk"])
                       .filter(pl.col("d_year") == 2001),
