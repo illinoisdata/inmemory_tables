@@ -38,7 +38,8 @@ if __name__ == '__main__':
 
     # Dry run; store no nodes in memory
     execution_time_counter, time_to_deserialize_counter, \
-    time_to_serialize_counter, peak_memory_usage_counter = \
+    time_to_serialize_counter, peak_memory_usage_counter, \
+    actual_execution_time_counter = \
     execution_graph.execute(debug = False, save_inmemory_tables = True)
 
     total_read_time = tablereader.report()
@@ -46,7 +47,7 @@ if __name__ == '__main__':
     print("execute:", args.job, args.memory, args.store, args.top,
           execution_time_counter, time_to_deserialize_counter,
           time_to_serialize_counter, total_read_time,
-          peak_memory_usage_counter)
+          peak_memory_usage_counter, actual_execution_time_counter)
 
     files = glob.glob('disk/*')
     for f in files:
@@ -59,5 +60,6 @@ if __name__ == '__main__':
                  str(time_to_deserialize_counter) + " " +
                  str(time_to_serialize_counter) + " " +
                  str(total_read_time) + " " +
-                 str(peak_memory_usage_counter) + "\n")
+                 str(peak_memory_usage_counter) + " " + 
+                 str(actual_execution_time_counter) + "\n")
     myfile.close()

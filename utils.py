@@ -2,6 +2,7 @@ import io
 import polars as pl
 import networkx as nx
 import time
+import copy
 from collections import defaultdict
 
 """
@@ -13,6 +14,8 @@ def estimate_polars_table_size(table):
     dtypes_sizes = {
         pl.datatypes.Int64: 8,
         pl.datatypes.Float64: 8,
+        pl.datatypes.Int32: 4,
+        pl.datatypes.Float32: 4,
         pl.datatypes.Datetime: 8,
         pl.datatypes.Utf8: 100
     }
@@ -31,6 +34,7 @@ Stores a polars table using parquet.
 """
 def parquet_result(result, filename, location = 'disk/', use_pyarrow = False):
     result.write_parquet(open(location + filename + '.parquet', 'wb'),
+                          statistics = False,
                           use_pyarrow = use_pyarrow)
     
 """
@@ -137,8 +141,12 @@ Writer for concurrent serialization of in-memory tables.
 use_pyarrow is set to True to reduce the memory consumption of the thread
 calling this method.
 """
-def mt_writer(task_queue, timestamp = 0):
+def mt_writer(task_queue, use_pyarrow, deepcopy_dict, timestamp = 0):
     for result, name in iter(task_queue.get, None):
+        if deepcopy_dict[name]:
+            parquet_result(copy.deepcopy(result), name, 
+                    use_pyarrow = False)
+        else:
         #print("mt_writer start " + name + ": " + str(time.time() - timestamp))
-        parquet_result(result, name, use_pyarrow = False)
+            parquet_result(result, name, use_pyarrow = False)
         #print("mt_writer end " + name + ": " + str(time.time() - timestamp))

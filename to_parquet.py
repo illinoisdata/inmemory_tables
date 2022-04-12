@@ -23,22 +23,35 @@ def read_columns():
 
     return column_dict
 
-def read_table(table_name, column_dict):
+def read_table(table_name, column_dict, dtype_list):
     # test database
     f = open("tpcds/" + table_name + ".dat", "r", encoding = "utf-8",
              errors = 'replace')
     df_str = f.read()
     column_count = df_str.split('\n')[0].count('|')
     return pl.read_csv(io.StringIO(df_str), has_header = False, sep = '|',
-                       new_columns = column_dict[table_name][:column_count])
+                       new_columns = column_dict[table_name][:column_count],
+                       dtypes = dtype_list)
 
 if __name__ == '__main__':
     column_dict = read_columns()
     
     for column in column_dict.keys():
         print(column)
-        table = read_table(column, column_dict)
+        table = read_table(column, column_dict, None)
+        
+        a = list(table.columns)
+        b = list(table.dtypes)
+        dtype_list = []
+        for i in range(len(a)):
+            if b[i] == pl.datatypes.Int64:
+                dtype_list.append(pl.datatypes.Int32)
+            elif b[i] == pl.datatypes.Float64:
+                dtype_list.append(pl.datatypes.Float32)
+            else:
+                dtype_list.append(b[i])
 
+        table = read_table(column, column_dict, dtype_list)
         #pd_df = table.to_pandas()
         #pd_df.to_parquet("tpcds/" + column + ".parquet")
         parquet_result(table, column, location = 'tpcds/', use_pyarrow = True)

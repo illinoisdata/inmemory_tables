@@ -1,8 +1,8 @@
-for iter in 1 2
+for iter in 1 2 3 4 5
 do
-for i in 1 2 3 4 5
+for i in 3 4 5 1 2
 	do
-	for j in 8 16 32
+	for j in 8 4 2
 		do
 			python3 setting_generator.py --job $i --memory $j
 			wait

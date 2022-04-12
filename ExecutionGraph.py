@@ -36,6 +36,8 @@ class ExecutionGraph(object):
 
         # Queue & thread for multithreaded serialization of in-memory tables.
         self.mt_queue = queue.Queue()
+        self.use_pyarrow = [True]
+        self.deepcopy_dict = {}
         self.mt_thread = None
         
     """
@@ -86,6 +88,7 @@ class ExecutionGraph(object):
         self.serialize_time_counter = 0
         self.deserialize_time_counter = 0
         self.execution_time_counter = 0
+        self.actual_execution_time_counter = 0
         
         execution_start_time = time.time()
 
@@ -98,8 +101,13 @@ class ExecutionGraph(object):
 
         # Start multithreaded table serializer
         if save_inmemory_tables:
+            for name in self.execution_order:
+                self.deepcopy_dict[name] = True
+            self.use_pyarrow[0] = True
             self.mt_thread = threading.Thread(target = mt_writer,
-                                             args = [self.mt_queue])
+                                             args = [self.mt_queue, 
+                                                     self.use_pyarrow,
+                                                     self.deepcopy_dict])
             self.mt_thread.start()
 
         # Run nodes in given execution order
@@ -120,6 +128,9 @@ class ExecutionGraph(object):
             status = node.execute(debug = debug)
             if status == -1:
                 return
+
+            if save_inmemory_tables and name in self.store_in_memory:
+                self.mt_queue.put((node.result, name))
         
             # Serialize current node to disk if not flagged for in memory
             # storage
@@ -136,7 +147,8 @@ class ExecutionGraph(object):
                     
                     # Multithreaded serialization if enabled
                     if save_inmemory_tables:
-                        self.mt_queue.put((parent_node.result, parent_name))
+                        self.deepcopy_dict[parent_name] = False
+                    #    self.mt_queue.put((parent_node.result, parent_name))
                         
                     parent_node.result = None
                     
@@ -173,10 +185,14 @@ class ExecutionGraph(object):
         # Join multithreaded writer
         if save_inmemory_tables:
             self.mt_queue.put(None)
+            self.use_pyarrow[0] = False
             self.mt_thread.join()
 
+        self.actual_execution_time_counter = time.time() - execution_start_time
+
         if debug:
-            print("actual total execution time:", time.time() - execution_start_time)
+            print("actual total execution time:", self.actual_execution_time_counter)
 
         return self.execution_time_counter, self.time_to_deserialize_counter, \
-               self.time_to_serialize_counter, self.peak_memory_usage_counter
+               self.time_to_serialize_counter, self.peak_memory_usage_counter, \
+               self.actual_execution_time_counter

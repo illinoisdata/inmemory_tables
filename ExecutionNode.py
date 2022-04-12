@@ -29,6 +29,7 @@ class ExecutionNode(object):
         self.name = name
         self.instructions = instructions
         self.dependencies = {dependency: None for dependency in dependencies}
+        self.dependencies_added = {dependency: False for dependency in dependencies}
         self.result = None
 
         self.tablereader = tablereader
@@ -96,6 +97,7 @@ class ExecutionNode(object):
         else:
             self.dependencies[parent_node.name] = \
                                                 parent_node.deserialize_result()
+        self.dependencies_added[parent_node.name] = True
 
         return 0
 
@@ -108,7 +110,7 @@ class ExecutionNode(object):
             print("Start executing node " + self.name + ": " + str(time.time() - self.timestamp))
             
         # Check for dependencies to be fully loaded
-        for k, v in self.dependencies.items():
+        for k, v in self.dependencies_added.items():
             if not v:
                 print("Dependency", k, "not found")
                 return -1
@@ -127,6 +129,7 @@ class ExecutionNode(object):
         # Flush dependencies
         for k in self.dependencies.keys():
             self.dependencies[k] = None
+            self.dependencies_added[k] = False
 
         if debug:
             #print("Node size:", self.size_function(self.result))

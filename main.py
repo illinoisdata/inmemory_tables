@@ -22,11 +22,13 @@ if __name__ == '__main__':
     execution_nodes, tablereader = get_tpcds_query_nodes(
         job_num = int(args.job))
 
-    #web_page = tablereader.read_table("promotion")
-    #a = list(web_page.columns)
-    #b = list(web_page.dtypes)
-    #for i in range(len(a)):
-    #    print(a[i], b[i])
+    web_page = tablereader.read_table("store_sales")
+    a = list(web_page.columns)
+    b = list(web_page.dtypes)
+    print(b)
+    for i in range(len(a)):
+        if b[i] == pl.datatypes.Float64:
+            print(web_page.select(pl.max(a[i]).alias("max")))
 
     #print("number of nodes:", len(execution_nodes))
 
