@@ -16,7 +16,7 @@ def get_tpcds_query_nodes(job_num = 1):
 
         # Query 5
         ss = ExecutionNode("ss",
-            lambda: tablereader.read_table("store_sales",
+            lambda: tablereader.read_table("store_sales_2000",
                                            ["ss_sold_store_sk",
                                             "ss_sold_date_sk",
                                             "ss_pricing_net_profit",
@@ -69,7 +69,7 @@ def get_tpcds_query_nodes(job_num = 1):
             ["ss", "sr"], tablereader)
 
         cs = ExecutionNode("cs",
-            lambda: tablereader.read_table("catalog_sales",
+            lambda: tablereader.read_table("catalog_sales_2000",
                                            ["cs_catalog_page_sk",
                                             "cs_sold_date_sk",
                                             "cs_pricing_ext_sales_price",
@@ -122,7 +122,7 @@ def get_tpcds_query_nodes(job_num = 1):
             ["cs", "cr"], tablereader)
 
         ws = ExecutionNode("ws",
-            lambda: tablereader.read_table("web_sales",
+            lambda: tablereader.read_table("web_sales_2000",
                                            ["ws_web_site_sk",
                                             "ws_sold_date_sk",
                                             "ws_pricing_ext_sales_price",
@@ -1100,7 +1100,7 @@ def get_tpcds_query_nodes(job_num = 1):
                                                           "c_last_name"]),
                       left_on = "ws_bill_customer_sk",
                       right_on = "c_customer_sk")
-                .join(tablereader.read_table("date", ["d_date_sk", "d_year"])
+                .join(tablereader.read_table("date", ["d_date_sk", "d_year"]),
                       left_on = "ws_sold_date_sk", right_on = "d_date_sk")
                 .groupby(["c_customer_id", "c_first_name", "c_last_name",
                           "d_year"])
@@ -1123,7 +1123,7 @@ def get_tpcds_query_nodes(job_num = 1):
                                                           "c_last_name"]),
                       left_on = "ss_sold_customer_sk",
                       right_on = "c_customer_sk")
-                .join(tablereader.read_table("date", ["d_date_sk", "d_year"])
+                .join(tablereader.read_table("date", ["d_date_sk", "d_year"]),
                       left_on = "ss_sold_date_sk", right_on = "d_date_sk")
                 .groupby(["c_customer_id", "c_first_name", "c_last_name",
                           "d_year"])
