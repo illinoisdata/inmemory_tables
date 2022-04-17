@@ -176,8 +176,7 @@ CREATE TABLE frequent_ss_items AS(
 select substr(i_item_desc,1,30) itemdesc,i_item_sk item_sk,d_date solddate,count(*) cnt
   from (select * from store_sales_1999 UNION ALL select * from store_sales_2000) store_sales
       ,item
-  where ss_sold_date_sk = d_date_sk
-    and ss_sold_item_sk = i_item_sk 
+  where ss_sold_item_sk = i_item_sk 
   group by substr(i_item_desc,1,30),i_item_sk,d_date
   having count(*) >4
 );
