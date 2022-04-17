@@ -1,0 +1,358 @@
+CREATE TABLE salesreturns1 with (format = 'PARQUET') AS(
+select  ss_sold_store_sk as store_sk,
+				ss_sold_date_sk  as date_sk,
+				ss_pricing_ext_sales_price as sales_price,
+				ss_pricing_net_profit as profit,
+				cast(0 as decimal(7,2)) as return_amt,
+				cast(0 as decimal(7,2)) as net_loss
+		from store_sales_2000
+		union all
+		select sr_store_sk as store_sk,
+			   sr_returned_date_sk as date_sk,
+			   cast(0 as decimal(7,2)) as sales_price,
+			   cast(0 as decimal(7,2)) as profit,
+			   sr_pricing_reversed_charge as return_amt,
+			   sr_pricing_net_loss as net_loss
+		from store_returns
+);
+
+CREATE TABLE ssr with (format = 'PARQUET') AS(
+	select w_store_id,
+			sum(sales_price) as sales,
+			sum(profit) as profit,
+			sum(return_amt) as returns,
+			sum(net_loss) as profit_loss
+	 from
+	     salesreturns1,
+		 date_dim,
+		 store
+	 where date_sk = d_date_sk
+		   and d_month_seq = 1207
+		   and store_sk = w_store_sk
+	 group by w_store_id
+);
+
+CREATE TABLE salesreturns2 with (format = 'PARQUET') AS(
+	select  cs_catalog_page_sk as page_sk,
+					cs_sold_date_sk  as date_sk,
+					cs_pricing_ext_sales_price as sales_price,
+					cs_pricing_net_profit as profit,
+					cast(0 as decimal(7,2)) as return_amt,
+					cast(0 as decimal(7,2)) as net_loss
+			from catalog_sales_2000
+			union all
+			select cr_catalog_page_sk as page_sk,
+				   cr_returned_date_sk as date_sk,
+				   cast(0 as decimal(7,2)) as sales_price,
+				   cast(0 as decimal(7,2)) as profit,
+				   cr_pricing_reversed_charge as return_amt,
+				   cr_pricing_net_loss as net_loss
+			from catalog_returns
+);
+
+CREATE TABLE csr with (format = 'PARQUET') AS(
+		select cp_catalog_page_id,
+			sum(sales_price) as sales,
+			sum(profit) as profit,
+			sum(return_amt) as returns,
+			sum(net_loss) as profit_loss
+	 from
+	     salesreturns2,
+		 date_dim,
+		 catalog_page
+	 where date_sk = d_date_sk
+		   and d_month_seq = 1207
+		   and page_sk = cp_catalog_page_sk
+	 group by cp_catalog_page_id
+);
+
+CREATE TABLE salesreturns3 with (format = 'PARQUET') AS(
+ select  ws_web_site_sk as wsr_web_site_sk,
+            ws_sold_date_sk  as date_sk,
+            ws_pricing_ext_sales_price as sales_price,
+            ws_pricing_net_profit as profit,
+            cast(0 as decimal(7,2)) as return_amt,
+            cast(0 as decimal(7,2)) as net_loss
+    from web_sales_2000
+    union all
+    select ws_web_site_sk as wsr_web_site_sk,
+           wr_returned_date_sk as date_sk,
+           cast(0 as decimal(7,2)) as sales_price,
+           cast(0 as decimal(7,2)) as profit,
+           wr_pricing_reversed_charge as return_amt,
+           wr_pricing_net_loss as net_loss
+    from web_returns left outer join web_sales on
+         ( wr_item_sk = ws_item_sk
+           and wr_order_number = ws_order_number)
+   
+);
+
+CREATE TABLE wsr with (format = 'PARQUET') AS(
+select web_site_id,
+        sum(sales_price) as sales,
+        sum(profit) as profit,
+        sum(return_amt) as returns,
+        sum(net_loss) as profit_loss
+ from
+     salesreturns3,
+     date_dim,
+     web_site
+ where date_sk = d_date_sk
+       and d_month_seq = 1207
+       and wsr_web_site_sk = web_site_sk
+ group by web_site_id
+);
+
+CREATE TABLE x1 with (format = 'PARQUET') AS(
+select 'store channel' as channel
+        , 'store' || w_store_id as id
+        , sales
+        , returns
+        , (profit - profit_loss) as profit
+ from   ssr
+ union all
+ select 'catalog channel' as channel
+        , 'catalog_page' || cp_catalog_page_id as id
+        , sales
+        , returns
+        , (profit - profit_loss) as profit
+ from  csr
+ union all
+ select 'web channel' as channel
+        , 'web_site' || web_site_id as id
+        , sales
+        , returns
+        , (profit - profit_loss) as profit
+ from   wsr
+);
+
+CREATE TABLE query5_result with (format = 'PARQUET') AS(
+ select channel
+        , id
+        , sum(sales) as sales
+        , sum(returns) as returns
+        , sum(profit) as profit
+ from 
+   x1
+ group by channel, id
+ order by channel
+         ,id
+ limit 100
+);
+
+
+CREATE TABLE ss with (format = 'PARQUET') AS(
+select w_store_sk,
+         sum(ss_pricing_ext_sales_price) as sales,
+         sum(ss_pricing_net_profit) as profit
+ from store_sales_2000,
+      date_dim,
+      store
+ where ss_sold_date_sk = d_date_sk
+       and d_month_seq = 1207 
+       and ss_sold_store_sk = w_store_sk
+ group by w_store_sk
+);
+
+CREATE TABLE sr with (format = 'PARQUET') AS(
+select w_store_sk,
+         sum(sr_pricing_reversed_charge) as returns,
+         sum(sr_pricing_net_loss) as profit_loss
+ from store_returns,
+      date_dim,
+      store
+ where sr_returned_date_sk = d_date_sk
+       and d_month_seq = 1207
+       and sr_store_sk = w_store_sk
+ group by w_store_sk
+);
+
+CREATE TABLE cs with (format = 'PARQUET') AS(
+select cs_call_center_sk,
+        sum(cs_pricing_ext_sales_price) as sales,
+        sum(cs_pricing_net_profit) as profit
+ from catalog_sales_2000,
+      date_dim
+ where cs_sold_date_sk = d_date_sk
+       and d_month_seq = 1207
+ group by cs_call_center_sk 
+);
+
+CREATE TABLE cr with (format = 'PARQUET') AS(
+select cr_call_center_sk,
+         sum(cr_pricing_reversed_charge) as returns,
+         sum(cr_pricing_net_loss) as profit_loss
+ from catalog_returns,
+      date_dim
+ where cr_returned_date_sk = d_date_sk
+       and d_month_seq = 1207
+ group by cr_call_center_sk
+);
+
+CREATE TABLE ws with (format = 'PARQUET') AS(
+select wp_page_sk,
+        sum(ws_pricing_ext_sales_price) as sales,
+        sum(ws_pricing_net_profit) as profit
+ from web_sales_2000,
+      date_dim,
+      web_page
+ where ws_sold_date_sk = d_date_sk
+       and d_month_seq = 1207
+       and ws_web_page_sk = wp_page_sk
+ group by wp_page_sk
+);
+
+CREATE TABLE wr with (format = 'PARQUET') AS(
+select wp_page_sk,
+        sum(wr_pricing_reversed_charge) as returns,
+        sum(wr_pricing_net_loss) as profit_loss
+ from web_returns,
+      date_dim,
+      web_page
+ where wr_returned_date_sk = d_date_sk
+       and d_month_seq = 1207
+       and wr_web_page_sk = wp_page_sk
+ group by wp_page_sk
+);
+
+CREATE TABLE x2 with (format = 'PARQUET') AS(
+select 'store channel' as channel
+        , ss.w_store_sk as id
+        , sales
+        , coalesce(returns, 0) as returns
+        , (profit - coalesce(profit_loss,0)) as profit
+ from   ss left join sr
+        on  ss.w_store_sk = sr.w_store_sk
+ union all
+ select 'catalog channel' as channel
+        , cs_call_center_sk as id
+        , sales
+        , returns
+        , (profit - profit_loss) as profit
+ from  cs
+       , cr
+ union all
+ select 'web channel' as channel
+        , ws.wp_page_sk as id
+        , sales
+        , coalesce(returns, 0) as returns
+        , (profit - coalesce(profit_loss,0)) as profit
+ from   ws left join wr
+        on  ws.wp_page_sk = wr.wp_page_sk
+ 
+);
+
+CREATE TABLE query77_result with (format = 'PARQUET') AS(
+ select channel
+        , id
+        , sum(sales) as sales
+        , sum(returns) as returns
+        , sum(profit) as profit
+ from 
+ x2
+ group by channel, id
+ order by channel
+         ,id
+ limit 100
+);
+
+CREATE TABLE ssr2 with (format = 'PARQUET') AS(
+select  w_store_id as store_id,
+          sum(ss_pricing_ext_sales_price) as sales,
+          sum(coalesce(sr_pricing_reversed_charge, 0)) as returns,
+          sum(ss_pricing_net_profit - coalesce(sr_pricing_net_loss, 0)) as profit
+  from store_sales_2000 left outer join store_returns on
+         (ss_sold_item_sk = sr_item_sk and ss_ticket_number = sr_ticket_number),
+     date_dim,
+     store,
+     item,
+     promotion
+ where ss_sold_date_sk = d_date_sk
+       and d_month_seq = 1207
+       and ss_sold_store_sk = w_store_sk
+       and ss_sold_item_sk = i_item_sk
+       and i_current_price > 50
+       and ss_sold_promo_sk = p_promo_sk
+       and p_channel_tv = 'N'
+ group by w_store_id
+);
+
+CREATE TABLE csr2 with (format = 'PARQUET') AS(
+select  cp_catalog_page_id as catalog_page_id,
+          sum(cs_pricing_ext_sales_price) as sales,
+          sum(coalesce(cr_pricing_reversed_charge, 0)) as returns,
+          sum(cs_pricing_net_profit - coalesce(cr_pricing_net_loss, 0)) as profit
+  from catalog_sales_2000 left outer join catalog_returns on
+         (cs_sold_item_sk = cr_item_sk and cs_order_number = cr_order_number),
+     date_dim,
+     catalog_page,
+     item,
+     promotion
+ where cs_sold_date_sk = d_date_sk
+       and d_month_seq = 1207
+        and cs_catalog_page_sk = cp_catalog_page_sk
+       and cs_sold_item_sk = i_item_sk
+       and i_current_price > 50
+       and cs_promo_sk = p_promo_sk
+       and p_channel_tv = 'N'
+group by cp_catalog_page_id
+);
+
+CREATE TABLE wsr2 with (format = 'PARQUET') AS(
+select  web_site_id,
+          sum(ws_pricing_ext_sales_price) as sales,
+          sum(coalesce(wr_pricing_reversed_charge, 0)) as returns,
+          sum(ws_pricing_net_profit - coalesce(wr_pricing_net_loss, 0)) as profit
+  from web_sales_2000 left outer join web_returns on
+         (ws_item_sk = wr_item_sk and ws_order_number = wr_order_number),
+     date_dim,
+     web_site,
+     item,
+     promotion
+ where ws_sold_date_sk = d_date_sk
+       and d_month_seq = 1207
+        and ws_web_site_sk = web_site_sk
+       and ws_item_sk = i_item_sk
+       and i_current_price > 50
+       and ws_promo_sk = p_promo_sk
+       and p_channel_tv = 'N'
+group by web_site_id
+);
+
+CREATE TABLE x3 with (format = 'PARQUET') AS(
+select 'store channel' as channel
+        , 'store' || store_id as id
+        , sales
+        , returns
+        , profit
+ from   ssr2
+ union all
+ select 'catalog channel' as channel
+        , 'catalog_page' || catalog_page_id as id
+        , sales
+        , returns
+        , profit
+ from  csr2
+ union all
+ select 'web channel' as channel
+        , 'web_site' || web_site_id as id
+        , sales
+        , returns
+        , profit
+ from   wsr2
+);
+
+CREATE TABLE query80_result with (format = 'PARQUET') AS(
+ select channel
+        , id
+        , sum(sales) as sales
+        , sum(returns) as returns
+        , sum(profit) as profit
+ from 
+ x3
+ group by channel, id
+ order by channel
+         ,id
+ limit 100
+);
+
