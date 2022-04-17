@@ -1,26 +1,26 @@
 create table store_sales_1999 with (format = 'PARQUET') as (select * from store_sales_temp where ss_sold_date_sk in 
-(select ss_sold_date_sk from store_sales_temp join date_dim on store_sales_temp.ss_sold_date_sk = date_dim.d_date_sk where date_dim.d_year = 1999));
+(select ss_sold_date_sk from store_sales_temp join date_dim_temp on store_sales_temp.ss_sold_date_sk = date_dim_temp.d_date_sk where date_dim_temp.d_year = 1999));
 create table store_sales_2000 with (format = 'PARQUET') as (select * from store_sales_temp where ss_sold_date_sk in 
-(select ss_sold_date_sk from store_sales_temp join date_dim on store_sales_temp.ss_sold_date_sk = date_dim.d_date_sk where date_dim.d_year = 2000));
+(select ss_sold_date_sk from store_sales_temp join date_dim_temp on store_sales_temp.ss_sold_date_sk = date_dim_temp.d_date_sk where date_dim_temp.d_year = 2000));
 create table store_sales_2001 with (format = 'PARQUET') as (select * from store_sales_temp where ss_sold_date_sk in 
-(select ss_sold_date_sk from store_sales_temp join date_dim on store_sales_temp.ss_sold_date_sk = date_dim.d_date_sk where date_dim.d_year = 2001));
+(select ss_sold_date_sk from store_sales_temp join date_dim_temp on store_sales_temp.ss_sold_date_sk = date_dim_temp.d_date_sk where date_dim_temp.d_year = 2001));
 create table store_sales_2002 with (format = 'PARQUET') as (select * from store_sales_temp where ss_sold_date_sk in 
-(select ss_sold_date_sk from store_sales_temp join date_dim on store_sales_temp.ss_sold_date_sk = date_dim.d_date_sk where date_dim.d_year = 2002));
+(select ss_sold_date_sk from store_sales_temp join date_dim_temp on store_sales_temp.ss_sold_date_sk = date_dim_temp.d_date_sk where date_dim_temp.d_year = 2002));
 
 create table catalog_sales_1999 with (format = 'PARQUET') as (select * from catalog_sales_temp where cs_sold_date_sk in 
-(select cs_sold_date_sk from catalog_sales_temp join date_dim on catalog_sales_temp.cs_sold_date_sk = date_dim.d_date_sk where date_dim.d_year = 1999));
+(select cs_sold_date_sk from catalog_sales_temp join date_dim_temp on catalog_sales_temp.cs_sold_date_sk = date_dim_temp.d_date_sk where date_dim_temp.d_year = 1999));
 create table catalog_sales_2000 with (format = 'PARQUET') as (select * from catalog_sales_temp where cs_sold_date_sk in 
-(select cs_sold_date_sk from catalog_sales_temp join date_dim on catalog_sales_temp.cs_sold_date_sk = date_dim.d_date_sk where date_dim.d_year = 2000));
+(select cs_sold_date_sk from catalog_sales_temp join date_dim_temp on catalog_sales_temp.cs_sold_date_sk = date_dim_temp.d_date_sk where date_dim_temp.d_year = 2000));
 create table catalog_sales_2001 with (format = 'PARQUET') as (select * from catalog_sales_temp where cs_sold_date_sk in 
-(select cs_sold_date_sk from catalog_sales_temp join date_dim on catalog_sales_temp.cs_sold_date_sk = date_dim.d_date_sk where date_dim.d_year = 2001));
+(select cs_sold_date_sk from catalog_sales_temp join date_dim_temp on catalog_sales_temp.cs_sold_date_sk = date_dim_temp.d_date_sk where date_dim_temp.d_year = 2001));
 create table catalog_sales_2002 with (format = 'PARQUET') as (select * from catalog_sales_temp where cs_sold_date_sk in 
-(select cs_sold_date_sk from catalog_sales_temp join date_dim on catalog_sales_temp.cs_sold_date_sk = date_dim.d_date_sk where date_dim.d_year = 2002));
+(select cs_sold_date_sk from catalog_sales_temp join date_dim_temp on catalog_sales_temp.cs_sold_date_sk = date_dim_temp.d_date_sk where date_dim_temp.d_year = 2002));
 
 create table web_sales_1999 with (format = 'PARQUET') as (select * from web_sales_temp where ws_sold_date_sk in 
-(select ws_sold_date_sk from web_sales_temp join date_dim on web_sales_temp.ws_sold_date_sk = date_dim.d_date_sk where date_dim.d_year = 1999));
+(select ws_sold_date_sk from web_sales_temp join date_dim_temp on web_sales_temp.ws_sold_date_sk = date_dim_temp.d_date_sk where date_dim_temp.d_year = 1999));
 create table web_sales_2000 with (format = 'PARQUET') as (select * from web_sales_temp where ws_sold_date_sk in 
-(select ws_sold_date_sk from web_sales_temp join date_dim on web_sales_temp.ws_sold_date_sk = date_dim.d_date_sk where date_dim.d_year = 2000));
+(select ws_sold_date_sk from web_sales_temp join date_dim_temp on web_sales_temp.ws_sold_date_sk = date_dim_temp.d_date_sk where date_dim_temp.d_year = 2000));
 create table web_sales_2001 with (format = 'PARQUET') as (select * from web_sales_temp where ws_sold_date_sk in 
-(select ws_sold_date_sk from web_sales_temp join date_dim on web_sales_temp.ws_sold_date_sk = date_dim.d_date_sk where date_dim.d_year = 2001));
+(select ws_sold_date_sk from web_sales_temp join date_dim_temp on web_sales_temp.ws_sold_date_sk = date_dim_temp.d_date_sk where date_dim_temp.d_year = 2001));
 create table web_sales_2002 with (format = 'PARQUET') as (select * from web_sales_temp where ws_sold_date_sk in 
-(select ws_sold_date_sk from web_sales_temp join date_dim on web_sales_temp.ws_sold_date_sk = date_dim.d_date_sk where date_dim.d_year = 2002));
+(select ws_sold_date_sk from web_sales_temp join date_dim_temp on web_sales_temp.ws_sold_date_sk = date_dim_temp.d_date_sk where date_dim_temp.d_year = 2002));
