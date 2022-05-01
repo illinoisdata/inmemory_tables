@@ -138,6 +138,7 @@ class ExecutionNode(object):
     Serializes current result and frees result from memory.
     """
     def serialize_result(self):
+        start = time.time()
         self.serialize_function(self.result, self.name)
         time_to_serialize = time.time() - start
         
@@ -152,6 +153,7 @@ class ExecutionNode(object):
     Deserializes and returns current result from disk.
     """
     def deserialize_result(self):
+        start = time.time()
         result_from_disk = self.deserialize_function(self.name)
         time_to_deserialize = time.time() - start
 
