@@ -1,0 +1,291 @@
+CREATE TABLE category_q33 with (format = 'PARQUET') AS(
+select
+  i_manufact_id
+from
+ item
+where i_category in ('Books', 'Home', 'Electronics',
+                                'Jewelry', 'Sports')
+);
+
+CREATE TABLE ss_q33 with (format = 'PARQUET') AS(
+select
+          i_manufact_id,sum(ss_pricing_ext_sales_price) total_sales
+ from
+ 	store_sales_2001,
+         customer_address,
+         item
+ where
+         i_manufact_id in (select
+  i_manufact_id
+from
+ category_q33)
+ and     ss_sold_item_sk              = i_item_sk
+ and     ss_sold_addr_sk              = ca_address_sk
+ and     ca_address_gmt_offset           = -5
+ group by i_manufact_id
+);
+
+CREATE TABLE cs_q33 with (format = 'PARQUET') AS(
+select
+          i_manufact_id,sum(cs_pricing_ext_sales_price) total_sales
+ from
+ 	catalog_sales_2001,
+         customer_address,
+         item
+ where
+         i_manufact_id               in (select
+  i_manufact_id
+from
+ category_q33)
+ and     cs_sold_item_sk              = i_item_sk
+ and     cs_bill_addr_sk         = ca_address_sk
+ and     ca_address_gmt_offset           = -5
+ group by i_manufact_id
+);
+
+CREATE TABLE ws_q33 with (format = 'PARQUET') AS(
+select
+          i_manufact_id,sum(ws_pricing_ext_sales_price) total_sales
+ from
+ 	web_sales_2001,
+         customer_address,
+         item
+ where
+         i_manufact_id               in (select
+  i_manufact_id
+from
+ category_q33)
+ and     ws_item_sk              = i_item_sk
+ and     ws_bill_addr_sk         = ca_address_sk
+ and     ca_address_gmt_offset           = -5
+ group by i_manufact_id
+);
+ 
+CREATE TABLE tmp_q33 with (format = 'PARQUET') AS(
+select * from ss_q33
+        union all
+        select * from cs_q33 
+        union all
+        select * from ws_q33
+);
+
+CREATE TABLE query33_result with (format = 'PARQUET') AS(
+ select i_manufact_id ,sum(total_sales) total_sales
+ from tmp_q33
+ group by i_manufact_id
+ order by total_sales
+ limit 100
+);
+
+CREATE TABLE category_q56 with (format = 'PARQUET') AS(
+select
+  i_item_id
+from
+ item
+where i_color in ('turquoise', 'smoke', 'slate', 'thistle',
+                                'peach', 'spring', 'saddle', 'tan',
+                                'salmon', 'yellow', 'royal', 'papaya',
+                                'sky', 'pale', 'rosy', 'seashell',
+                                'wheat', 'steel', 'white', 'peru',
+                                'snow', 'purple', 'plum', 'pink',
+                                'rose', 'tomato', 'red', 'violet',
+                                'sandy', 'sienna', 'powder', 'puff')
+);
+
+CREATE TABLE ss_q56 with (format = 'PARQUET') AS(
+select i_item_id,sum(ss_pricing_ext_sales_price) total_sales
+ from
+ 	store_sales_2001,
+         customer_address,
+         item
+ where i_item_id in (select
+     i_item_id
+from category_q56)
+ and     ss_sold_item_sk              = i_item_sk
+ and     ss_sold_addr_sk              = ca_address_sk
+ and     ca_address_gmt_offset           = -5 
+ group by i_item_id
+);
+
+CREATE TABLE cs_q56 with (format = 'PARQUET') AS(
+select i_item_id,sum(cs_pricing_ext_sales_price) total_sales
+ from
+ 	catalog_sales_2001,
+         customer_address,
+         item
+ where
+         i_item_id               in (select
+  i_item_id
+from category_q56)
+ and     cs_sold_item_sk              = i_item_sk
+ and     cs_bill_addr_sk         = ca_address_sk
+ and     ca_address_gmt_offset           = -5 
+ group by i_item_id
+);
+
+CREATE TABLE ws_q56 with (format = 'PARQUET') AS(
+select i_item_id,sum(ws_pricing_ext_sales_price) total_sales
+ from
+ 	web_sales_2001,
+         customer_address,
+         item
+ where
+         i_item_id               in (select
+  i_item_id
+from category_q56)
+ and     ws_item_sk              = i_item_sk
+ and     ws_bill_addr_sk         = ca_address_sk
+ and     ca_address_gmt_offset           = -5
+ group by i_item_id
+);
+
+CREATE TABLE tmp_q56 with (format = 'PARQUET') AS(
+select * from ss_q56
+        union all
+        select * from cs_q56 
+        union all
+        select * from ws_q56
+);
+
+CREATE TABLE query56_result with (format = 'PARQUET') AS(
+ select  i_item_id ,sum(total_sales) total_sales
+ from tmp_q56
+ group by i_item_id
+ order by total_sales,
+          i_item_id
+ limit 100
+);
+
+CREATE TABLE category_q60 with (format = 'PARQUET') AS(
+select
+  i_manufact_id
+from
+ item
+where i_category in ('Children', 'Men', 'Music',
+                                'Jewelry', 'Shoes')
+);
+
+CREATE TABLE ss_q60 with (format = 'PARQUET') AS(
+select
+          i_manufact_id,sum(ss_pricing_ext_sales_price) total_sales
+ from
+ 	store_sales_2001,
+         customer_address,
+         item
+ where
+         i_manufact_id in (select
+  i_manufact_id
+from
+ category_q60)
+ and     ss_sold_item_sk              = i_item_sk
+ and     ss_sold_addr_sk              = ca_address_sk
+ and     ca_address_gmt_offset           = -5
+ group by i_manufact_id
+);
+
+CREATE TABLE cs_q60 with (format = 'PARQUET') AS(
+select
+          i_manufact_id,sum(cs_pricing_ext_sales_price) total_sales
+ from
+ 	catalog_sales_2001,
+         customer_address,
+         item
+ where
+         i_manufact_id               in (select
+  i_manufact_id
+from
+ category_q60)
+ and     cs_sold_item_sk              = i_item_sk
+ and     cs_bill_addr_sk         = ca_address_sk
+ and     ca_address_gmt_offset           = -5
+ group by i_manufact_id
+);
+
+CREATE TABLE ws_q60 with (format = 'PARQUET') AS(
+select
+          i_manufact_id,sum(ws_pricing_ext_sales_price) total_sales
+ from
+ 	web_sales_2001,
+         customer_address,
+         item
+ where
+         i_manufact_id               in (select
+  i_manufact_id
+from
+ category_q60)
+ and     ws_item_sk              = i_item_sk
+ and     ws_bill_addr_sk         = ca_address_sk
+ and     ca_address_gmt_offset           = -5
+ group by i_manufact_id
+);
+
+CREATE TABLE tmp_q60 with (format = 'PARQUET') AS(
+select * from ss_q60 
+        union all
+        select * from cs_q60 
+        union all
+        select * from ws_q60
+);
+
+CREATE TABLE query60_result with (format = 'PARQUET') AS(
+ select 
+  i_manufact_id
+,sum(total_sales) total_sales
+ from tmp_q60
+ group by i_manufact_id
+ order by i_manufact_id
+      ,total_sales
+ limit 100
+);
+
+CREATE TABLE category_q61 with (format = 'PARQUET') AS(
+select
+  i_item_sk
+from
+ item
+where i_category in ('Books', 'Home', 'Electronics',
+                                'Jewelry', 'Sports')
+);
+
+CREATE TABLE promotional_sales with (format = 'PARQUET') AS(
+select sum(ss_pricing_ext_sales_price) promotions
+   from  store_sales_2001
+        ,store
+        ,promotion
+        ,customer
+        ,customer_address 
+        ,category_q61
+   where ss_sold_store_sk = w_store_sk
+   and   ss_sold_promo_sk = p_promo_sk
+   and   ss_sold_customer_sk= c_customer_sk
+   and   ca_address_sk = c_current_addr_sk
+   and   ss_sold_item_sk = i_item_sk 
+   and   ca_address_gmt_offset = -5
+   and   (p_channel_dmail = 'Y' or p_channel_email = 'Y' or p_channel_tv = 'Y')
+   and   w_store_address_gmt_offset = -5
+);
+
+CREATE TABLE all_sales with (format = 'PARQUET') AS(
+select sum(ss_pricing_ext_sales_price) total
+   from  store_sales_2001
+        ,store
+        ,customer
+        ,customer_address
+        ,category_q61
+   where ss_sold_store_sk = w_store_sk
+   and   ss_sold_customer_sk = c_customer_sk
+   and   ca_address_sk = c_current_addr_sk
+   and   ss_sold_item_sk = i_item_sk
+   and   ca_address_gmt_offset = 2001
+   and   w_store_address_gmt_offset = -5
+);
+
+CREATE TABLE query61_result with (format = 'PARQUET') AS(
+select promotions,total,cast(promotions as decimal(15,4))/cast(total as decimal(15,4))*100 as ratio
+from
+  promotional_sales,
+  all_sales
+order by promotions, total
+limit 100
+);
+
