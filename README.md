@@ -1,2 +1,2 @@
-# inmemory_tables
-Speeding up recurring SQL jobs by storing certain tables in memory instead of writing to disk.
+# S/C: Speeding up Data Materialization with Bounded Memory
+Speed up MV refresh workloads by keeping intermediate data in memory.
