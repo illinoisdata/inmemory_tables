@@ -4,6 +4,9 @@ import time
 from utils import *
 from collections import defaultdict
 
+"""
+Keeps track of the time spent reading base tables.
+"""
 class TableReader(object):
 
     """
@@ -14,13 +17,14 @@ class TableReader(object):
     def __init__(self):
         self.table_read_times = defaultdict(int)
         self.table_read_num_times = defaultdict(int)
+        self.timestamp = time.time()
 
     def read_table(self, table_name, columns = None):
         start = time.time()
-
+        print("start read base table ", table_name, ": ", time.time() - self.timestamp) 
         table = unparquet_result(table_name, location = 'tpcds/',
                                  columns = columns)
-        
+        print("finished read bas table ", table_name, ": ", time.time() - self.timestamp)
         table_read_time = time.time() - start
         self.table_read_times[table_name] += table_read_time
         self.table_read_num_times[table_name] += 1

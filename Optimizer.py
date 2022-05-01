@@ -77,9 +77,9 @@ class Optimizer(object):
     """
     Function for choosing method to improve execution order with.
     """
-    def improve_execution_order(self, method = "both", sa_iters = 10000,
+    def improve_execution_order(self, method = "dfs", sa_iters = 10000,
                                    debug = False):
-        if method == "both":
+        if method == "dfs+sa":
             new_execution_order, _ = dfs_topological(
                 graph = self.execution_graph.graph,
                 node_sizes = self.node_sizes,
@@ -110,21 +110,12 @@ class Optimizer(object):
                     copy.deepcopy(self.execution_graph.execution_order),
                 n_iters = sa_iters, debug = debug)
 
-        if method == "recursive_min_cut":
+        if method == "separator":
             return recursive_min_cut(
                 graph = self.execution_graph.graph,
                 node_sizes = self.node_sizes,
                 store_in_memory = self.execution_graph.store_in_memory,
                 debug = debug)
-
-        if method == "recursive_min_cut2":
-            return recursive_min_cut2(
-                graph = self.execution_graph.graph,
-                node_sizes = self.node_sizes,
-                store_in_memory = self.execution_graph.store_in_memory,
-                debug = debug)
-
-
 
         # no valid choice made
         return self.execution_graph.execution_order, self.memory_limit
@@ -203,6 +194,8 @@ class Optimizer(object):
 
             # Early stop if peak memory usage violates memory limit
             if new_peak_memory_usage > self.memory_limit:
+                if debug:
+                    print("Topological order violates memory limit, stopping EM..........")
                 break
 
             self.execution_graph.execution_order = new_execution_order

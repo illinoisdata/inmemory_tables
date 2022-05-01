@@ -550,7 +550,8 @@ def get_tpcds_query_nodes(job_num = 1):
             lambda: tablereader.read_table("item")
                 .filter(pl.col("i_category")
                         .is_in(["Books", "Home", "Electronics",
-                                "Jewelry", "Sports"])),
+                                "Jewelry", "Sports"]))
+                .select(pl.col("i_manufact_id")),                      
             [], tablereader)
 
         category_q56 = ExecutionNode("category_q56",
@@ -563,21 +564,24 @@ def get_tpcds_query_nodes(job_num = 1):
                                 "wheat", "steel", "white", "peru",
                                 "snow", "purple", "plum", "pink",
                                 "rose", "tomato", "red", "violet",
-                                "sandy", "sienna", "powder", "puff"])),
+                                "sandy", "sienna", "powder", "puff"]))
+                .select(pl.col("i_item_id")),
             [], tablereader)
 
         category_q60 = ExecutionNode("category_q60",
             lambda: tablereader.read_table("item")
                 .filter(pl.col("i_category")
                         .is_in(["Children", "Men", "Music",
-                                "Jewelry", "Shoes"])),
+                                "Jewelry", "Shoes"]))
+                .select(pl.col("i_manufact_id")),
             [], tablereader)
 
         category_q61 = ExecutionNode("category_q61",
             lambda: tablereader.read_table("item")
                 .filter(pl.col("i_category")
                         .is_in(["Books", "Home", "Electronics",
-                                "Jewelry", "Sports"])),
+                                "Jewelry", "Sports"]))
+                .select(pl.col("i_manufact_id")),
             [], tablereader)
 
         ss = ExecutionNode("ss",
@@ -846,14 +850,14 @@ def get_tpcds_query_nodes(job_num = 1):
                                  .alias("sold_date_sk"),
                                  pl.col("cs_pricing_ext_sales_price")
                                  .alias("sales_price"),
-                                 pl.lit(-1).cast(pl.datatypes.Int32)
+                                 pl.lit(-1).cast(pl.datatypes.Int64)
                                  .alias("store_sk")]))
                 .vstack(ws_base
                         .select([pl.col("ws_sold_date_sk")
                                  .alias("sold_date_sk"),
                                  pl.col("ws_pricing_ext_sales_price")
                                  .alias("sales_price"),
-                                 pl.lit(-1).cast(pl.datatypes.Int32)
+                                 pl.lit(-1).cast(pl.datatypes.Int64)
                                  .alias("store_sk")]))
                 .select([pl.col("sold_date_sk"), pl.col("sales_price"),
                          pl.col("store_sk")]),

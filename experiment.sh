@@ -1,42 +1,18 @@
-for iter in 1 2 3 4 5
+for iter in 1
 do
-for i in 3 4 5 1 2
+for i in 1 2 3 4 5
 	do
-	for j in 8 4 2
+	for j in 32
 		do
 			python3 setting_generator.py --job $i --memory $j
-			wait
-			sleep 1
-			python3 setting_consumer.py --job $i --memory $j --store all --top none
-			wait
-			sleep 1
-			python3 setting_consumer.py --job $i --memory $j --store none --top none
-			wait
-			sleep 1
-			python3 setting_consumer.py --job $i --memory $j --store greedy --top none
-			wait
-			sleep 1
-			python3 setting_consumer.py --job $i --memory $j --store random --top none
-			wait
-			sleep 1
-			python3 setting_consumer.py --job $i --memory $j --store mkp --top none
-			wait
-			sleep 1
-			python3 setting_consumer.py --job $i --memory $j --store greedy --top dfs
-			wait
-			sleep 1
-			python3 setting_consumer.py --job $i --memory $j --store random --top dfs
 			wait
 			sleep 1
 			python3 setting_consumer.py --job $i --memory $j --store mkp --top dfs
 			wait
 			sleep 1
-			python3 setting_consumer.py --job $i --memory $j --store mkp --top sa
-			wait
-			sleep 1
-			python3 setting_consumer.py --job $i --memory $j --store mkp --top recursive_min_cut
-			wait
-			sleep 1
 		done
+		python3 setting_consumer.py --job $i --memory 32 --store all --top none
+		wait
+		sleep 1
 	done
 done

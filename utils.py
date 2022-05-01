@@ -36,6 +36,7 @@ def parquet_result(result, filename, location = 'disk/', use_pyarrow = False):
     result.write_parquet(open(location + filename + '.parquet', 'wb'),
                           statistics = False,
                           use_pyarrow = use_pyarrow)
+
     
 """
 Default deserialization function for ExecutionNode if none is provided.
@@ -147,6 +148,4 @@ def mt_writer(task_queue, use_pyarrow, deepcopy_dict, timestamp = 0):
             parquet_result(copy.deepcopy(result), name, 
                     use_pyarrow = False)
         else:
-        #print("mt_writer start " + name + ": " + str(time.time() - timestamp))
             parquet_result(result, name, use_pyarrow = False)
-        #print("mt_writer end " + name + ": " + str(time.time() - timestamp))

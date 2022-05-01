@@ -92,6 +92,11 @@ class ExecutionGraph(object):
         
         execution_start_time = time.time()
 
+        for name in self.execution_order:
+            node = self.node_dict[name]
+            node.timestamp = execution_start_time
+            node.tablereader.timestamp = execution_start_time
+
         # Keep track of number of successors for each node yet to be executed;
         # When a node stored in memory's successors have all been executed,
         # its result is garbage collected.
@@ -107,7 +112,8 @@ class ExecutionGraph(object):
             self.mt_thread = threading.Thread(target = mt_writer,
                                              args = [self.mt_queue, 
                                                      self.use_pyarrow,
-                                                     self.deepcopy_dict])
+                                                     self.deepcopy_dict,
+                                                     execution_start_time])
             self.mt_thread.start()
 
         # Run nodes in given execution order

@@ -6,7 +6,7 @@ from ExecutionGraph import *
 from utils import *
 
 """
-Step 3: Find a better execution order by running DFS with a heuristic of
+Find a better execution order by running DFS with a heuristic of
 minimizing the amount of time large results stay in memory.
 Returns the new execution order and its peak memory usage.
 debug: Print memory usage given execution order.
@@ -40,7 +40,7 @@ def dfs_topological(graph, node_sizes, store_in_memory, debug = False):
     return new_execution_order, new_peak_memory_usage
 
 """
-Helper recursive function for step 3 DFS.
+Helper recursive function for DFS.
 """
 def dfs_topological_helper(name, graph, visited, stack, memory_usage):
     visited.add(name)
@@ -56,9 +56,9 @@ def dfs_topological_helper(name, graph, visited, stack, memory_usage):
     stack.append(name)
 
 """
-Step 4: Further improve the execution order by optimizing it in terms of
+Improve the execution order by optimizing it in terms of
 weighted minimum linear arrangement via simulated annealing.
-new_execution_order: a default execution order (passed from step 3)
+new_execution_order: a default execution order
 """
 def simulated_annealing(graph, node_sizes, store_in_memory, memory_limit,
                         new_execution_order, n_iters = 10000, debug = False):
@@ -233,51 +233,3 @@ def recursive_min_cut_helper(new_graph, memory_usage, max_capacity,
 
     return source_half + sink_half    
 
-
-def recursive_min_cut2(graph, node_sizes, store_in_memory, debug = False):
-    # Compute the actual memory usage of nodes based on its size and whether
-    # it is stored in memory or not (i.e. if its not, then the usage is 0)
-    memory_usage = {name: int(name in store_in_memory) * node_sizes[name]
-                    for name in graph.nodes}
-
-    raw_execution_order = recursive_min_cut_helper2(graph, memory_usage,
-                                               max_capacity, debug)
-
-    new_graph = nx.DiGraph(graph)
-
-    # Compute peak memory usage
-    new_peak_memory_usage = compute_peak_memory_usage(
-                new_graph, execution_order, node_sizes, store_in_memory)
-
-    if debug:
-        print("Peak memory usage:", new_peak_memory_usage)
-
-    return execution_order, new_peak_memory_usage
-
-def recursive_min_cut_helper2(new_graph, memory_usage, max_capacity,
-                             debug = False):
-    if debug:
-        #print(new_graph.edges())
-        pass
-        
-    # Base case
-    if new_graph.number_of_nodes() == 1:
-        return list(new_graph.nodes())
-    
-    sep, part1, part2 = nxmetis.vertex_separator(new_graph,
-                                                 weight = memory_usage)
-    if debug:
-        print(cut_value)
-        #print("partition 0:", new_graph.subgraph(partition[0]).nodes())
-        #print("partition 1:", new_graph.subgraph(partition[1]).nodes())
-        pass
-
-    partition_0 = nx.DiGraph(new_graph.subgraph(part1 + sep))
-    partition_1 = nx.DiGraph(new_graph.subgraph(part2))
-
-    source_half = recursive_min_cut_helper2(partition_0,
-                                           memory_usage, max_capacity, debug)
-    sink_half = recursive_min_cut_helper2(partition_1,
-                                         memory_usage, max_capacity, debug)
-
-    return source_half + sink_half    

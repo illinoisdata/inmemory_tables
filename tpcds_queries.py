@@ -550,7 +550,8 @@ def get_tpcds_query_nodes(job_num = 1):
             lambda: tablereader.read_table("item")
                 .filter(pl.col("i_category")
                         .is_in(["Books", "Home", "Electronics",
-                                "Jewelry", "Sports"])),
+                                "Jewelry", "Sports"]))
+                .select(pl.col("i_manufact_id")),
             [], tablereader)
 
         category_q56 = ExecutionNode("category_q56",
@@ -563,21 +564,24 @@ def get_tpcds_query_nodes(job_num = 1):
                                 "wheat", "steel", "white", "peru",
                                 "snow", "purple", "plum", "pink",
                                 "rose", "tomato", "red", "violet",
-                                "sandy", "sienna", "powder", "puff"])),
+                                "sandy", "sienna", "powder", "puff"]))
+                .select(pl.col("i_item_id")),
             [], tablereader)
 
         category_q60 = ExecutionNode("category_q60",
             lambda: tablereader.read_table("item")
                 .filter(pl.col("i_category")
                         .is_in(["Children", "Men", "Music",
-                                "Jewelry", "Shoes"])),
+                                "Jewelry", "Shoes"]))
+                .select(pl.col("i_manufact_id")),
             [], tablereader)
 
         category_q61 = ExecutionNode("category_q61",
             lambda: tablereader.read_table("item")
                 .filter(pl.col("i_category")
                         .is_in(["Books", "Home", "Electronics",
-                                "Jewelry", "Sports"])),
+                                "Jewelry", "Sports"]))
+                .select(pl.col("i_manufact_id")),
             [], tablereader)
 
         ss = ExecutionNode("ss",
@@ -909,7 +913,7 @@ def get_tpcds_query_nodes(job_num = 1):
             lambda wswscs: wswscs
                 .join(tablereader.read_table("date", ["d_date_sk",
                                                       "d_year", "d_week_seq"])
-                      .filter(pl.col("d_year") == 2001), on = "d_week_seq")
+                      .filter(pl.col("d_year") == 2000), on = "d_week_seq")
                 .select([pl.col("d_week_seq").alias("d_week_seq1"),
                          pl.col("sun_sales").alias("sun_sales1"),
                          pl.col("mon_sales").alias("mon_sales1"),
@@ -924,7 +928,7 @@ def get_tpcds_query_nodes(job_num = 1):
             lambda wswscs: wswscs
                 .join(tablereader.read_table("date", ["d_date_sk",
                                                       "d_year", "d_week_seq"])
-                      .filter(pl.col("d_year") == 2002), on = "d_week_seq")
+                      .filter(pl.col("d_year") == 2001), on = "d_week_seq")
                 .select([pl.col("d_week_seq").map(lambda x: x - 53)
                          .alias("d_week_seq2"),
                          pl.col("sun_sales").alias("sun_sales2"),
@@ -1000,7 +1004,7 @@ def get_tpcds_query_nodes(job_num = 1):
             lambda wss: wss
                 .join(tablereader.read_table("date", ["d_date_sk",
                                                       "d_year", "d_week_seq"])
-                      .filter(pl.col("d_year") == 2001), on = "d_week_seq")
+                      .filter(pl.col("d_year") == 2000), on = "d_week_seq")
                 .join(tablereader.read_table("store", ["w_store_sk",
                                                        "w_store_name",
                                                        "w_store_id"]),
@@ -1021,7 +1025,7 @@ def get_tpcds_query_nodes(job_num = 1):
             lambda wss: wss
                 .join(tablereader.read_table("date", ["d_date_sk",
                                                       "d_year", "d_week_seq"])
-                      .filter(pl.col("d_year") == 2002), on = "d_week_seq")
+                      .filter(pl.col("d_year") == 2001), on = "d_week_seq")
                 .join(tablereader.read_table("store", ["w_store_sk",
                                                        "w_store_name",
                                                        "w_store_id"]),

@@ -39,7 +39,7 @@ def store_nodes_none(debug = False):
 """
 Baseline greedy node selector
 """
-def store_nodes_greedy_forward(graph, execution_order, node_scores, node_sizes,
+def store_nodes_greedy(graph, execution_order, node_scores, node_sizes,
                                nodes_to_exclude, memory_limit):
     
     # Keep track of when to simulate garbage collection of results
@@ -71,92 +71,11 @@ def store_nodes_greedy_forward(graph, execution_order, node_scores, node_sizes,
     new_peak_memory_usage = compute_peak_memory_usage(
             graph, execution_order, node_sizes, new_store_in_memory)
 
-    return new_store_in_memory, new_time_save, new_peak_memory_usage
-
-"""
-Baseline greedy node selector, but goes through the execution order in
-reverse
-"""
-def store_nodes_greedy_backward(graph, execution_order, node_scores, node_sizes,
-                                nodes_to_exclude, memory_limit):
-    
-    # Keep track of when to simulate garbage collection of results
-    num_successors = [0 for i in execution_order]
-    num_successors_dict = dict(zip(execution_order, num_successors))
-    
-    new_store_in_memory = set()
-    current_memory_usage = 0
-    
-    for name in reversed(execution_order):
-        if name in nodes_to_exclude:
-            continue
-        
-        # Find dependencies freed here
-        for parent_name in graph.predecessors(name):
-            if (num_successors_dict[parent_name] == 0 and
-                node_sizes[parent_name] <= memory_limit - current_memory_usage
-                and parent_name not in nodes_to_exclude):
-                new_store_in_memory.add(parent_name)
-                current_memory_usage += node_sizes[parent_name]
-                
-            num_successors_dict[parent_name] += 1
-        
-        # node execution
-        if name in new_store_in_memory:
-            current_memory_usage -= node_sizes[name]
-            
-    new_time_save = sum([node_scores[i] for i in new_store_in_memory])
-    new_peak_memory_usage = compute_peak_memory_usage(
-            graph, execution_order, node_sizes, new_store_in_memory)
-
-    return new_store_in_memory, new_time_save, new_peak_memory_usage
-
-"""
-Baseline greedy node selector, choosing the better result from iterating
-forward or backward
-"""
-def store_nodes_greedy(graph, execution_order, node_scores, node_sizes,
-                       nodes_to_exclude, memory_limit, debug = False):
-    
-    s_forward, t_forward, m_forward = \
-               store_nodes_greedy_forward(graph = graph,
-                                          execution_order = execution_order,
-                                          node_scores = node_scores,
-                                          node_sizes = node_sizes,
-                                          nodes_to_exclude = nodes_to_exclude,
-                                          memory_limit = memory_limit)
-
-    """
-    s_backward, t_backward, m_backward = \
-                store_nodes_greedy_backward(graph = graph,
-                                            execution_order = execution_order,
-                                            node_scores = node_scores,
-                                            node_sizes = node_sizes,
-                                            nodes_to_exclude = nodes_to_exclude,
-                                            memory_limit = memory_limit)
-    """
-
-
     if debug:
-         print("Time save:", t_forward)
-         print("Peak memory usage:", m_forward)
-            
-    return s_forward, t_forward, m_forward
-    """
-    if t_forward >= t_backward:
-        if debug:
-            print("Time save:", t_forward)
-            print("Peak memory usage:", m_forward)
-            
-        return s_forward, t_forward, m_forward
+        print("Time save:", new_time_save)
+        print("Peak memory usage:", new_peak_memory_usage)
 
-    if debug:
-        print("Time save:", t_backward)
-        print("Peak memory usage:", m_backward)
-
-    return s_backward, t_backward, m_backward
-    """
-    
+    return new_store_in_memory, new_time_save, new_peak_memory_usage    
 
 """
 Randomly select nodes to store given memory limit.
@@ -188,7 +107,7 @@ def store_nodes_random(graph, execution_order, node_scores, node_sizes,
     return new_store_in_memory, new_time_save, new_peak_memory_usage
 
 """
-Step 1: find all relevant maximal sets of results which act as constraints
+Find all relevant maximal sets of results which act as constraints
 for the multidimensional knapsack problem.
 debug: show maximal set count.
 """
@@ -239,7 +158,7 @@ def find_maximal_sets(graph, execution_order,node_scores, node_sizes,
     return maximal_sets
 
 """
-Step 2: Run a multidimensional 0-1 knapsack solver using branch & bound to
+Run a multidimensional 0-1 knapsack solver using branch & bound to
 find the optimal set of nodes to store in memory given memory size
 constraint.
 Returns the nodes to store in memory, best time save and peak memory usage.
@@ -285,7 +204,6 @@ def mkp(graph, execution_order, node_scores, node_sizes, nodes_to_exclude,
     capacities = [memory_limit for i in range(len(maximal_sets))]
 
     # Initialize Google MKP solver
-    # print("solving knapsack")
     solver = pywrapknapsack_solver.KnapsackSolver(
           pywrapknapsack_solver.KnapsackSolver
               .KNAPSACK_MULTIDIMENSION_SCIP_MIP_SOLVER ,
@@ -293,7 +211,6 @@ def mkp(graph, execution_order, node_scores, node_sizes, nodes_to_exclude,
     solver.Init(profits, weights, capacities)
     solver.set_time_limit(10)
     time_save = solver.Solve()
-    # print("knapsack done")
 
     # Gather nodes to store in memory
     for i in range(len(vector_nodes)):

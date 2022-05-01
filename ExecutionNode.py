@@ -56,7 +56,7 @@ class ExecutionNode(object):
         self.result_size_history = []
         self.time_to_serialize_history = []
         self.time_to_deserialize_history = []
-        self.timestamp = 0
+        self.timestamp = time.time()
 
     """
     Returns average result size if available.
@@ -116,14 +116,6 @@ class ExecutionNode(object):
                 return -1
 
         # Execute
-        """
-        try:
-            self.result = self.instructions(*list(self.dependencies.values()))
-        except Exception as inst:
-            if debug:
-                print("Execution of", self.name, "failed:", inst)
-                return -1
-        """
         self.result = self.instructions(*list(self.dependencies.values()))
 
         # Flush dependencies
@@ -132,7 +124,7 @@ class ExecutionNode(object):
             self.dependencies_added[k] = False
 
         if debug:
-            #print("Node size:", self.size_function(self.result))
+            print("Node size:", self.size_function(self.result))
             print("Finished executing node " + self.name + ": " + str(time.time() - self.timestamp))
 
         # Record result size
@@ -146,11 +138,8 @@ class ExecutionNode(object):
     Serializes current result and frees result from memory.
     """
     def serialize_result(self):
-        start = time.time()
-        #print("Start serializing node " + self.name + ": " + str(time.time() - self.timestamp))
         self.serialize_function(self.result, self.name)
         time_to_serialize = time.time() - start
-        #print("Finished serializing node " + self.name + ": " + str(time.time() - self.timestamp))
         
         self.result = None
 
@@ -159,23 +148,16 @@ class ExecutionNode(object):
         if len(self.time_to_serialize_history) > self.ROLLING_AVG_WINDOW_SIZE:
             self.time_to_serialize_history.pop(0)
 
-        #print("serialized", self.name, ", time taken:", time_to_serialize)
-
     """
     Deserializes and returns current result from disk.
     """
     def deserialize_result(self):
-        start = time.time()
-        #print("Start deserializing node " + self.name + ": " + str(time.time() - self.timestamp))
         result_from_disk = self.deserialize_function(self.name)
         time_to_deserialize = time.time() - start
-        #print("Finished deserializing node " + self.name + ": " + str(time.time() - self.timestamp))
 
         # Record time to serialize
         self.time_to_deserialize_history.append(time_to_deserialize)
         if len(self.time_to_deserialize_history) > self.ROLLING_AVG_WINDOW_SIZE:
             self.time_to_deserialize_history.pop(0)
-
-        #print("deserialized", self.name, ", time taken:", time_to_deserialize)
 
         return result_from_disk

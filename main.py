@@ -22,15 +22,7 @@ if __name__ == '__main__':
     execution_nodes, tablereader = get_tpcds_query_nodes(
         job_num = int(args.job))
 
-    web_page = tablereader.read_table("store_sales")
-    a = list(web_page.columns)
-    b = list(web_page.dtypes)
-    print(b)
-    for i in range(len(a)):
-        if b[i] == pl.datatypes.Float64:
-            print(web_page.select(pl.max(a[i]).alias("max")))
-
-    #print("number of nodes:", len(execution_nodes))
+    print("number of nodes:", len(execution_nodes))
 
     # Create graph & add nodes
     execution_graph = ExecutionGraph()
@@ -40,7 +32,7 @@ if __name__ == '__main__':
     # Dry run; store no nodes in memory
     execution_graph.execute(debug = False)
 
-    tablereader.report(debug= True)
+    tablereader.report(debug = False)
     tablereader.clear()
 
     files = glob.glob('disk/*')
@@ -51,8 +43,8 @@ if __name__ == '__main__':
     # order
     optimizer = Optimizer(execution_graph,
                           memory_limit = float(args.memory) * 1000000000)
-    optimizer.optimize(store_nodes_method = "greedy",
-        execution_order_method = "both", debug = False)
+    optimizer.optimize(store_nodes_method = args.store,
+        execution_order_method = args.top, debug = False)
 
     del optimizer
     gc.collect()
