@@ -1,7 +1,7 @@
 from ExecutionNode import *
 from ExecutionGraph import *
 from Optimizer import *
-from tpcds_queries import *
+from experiment.tpcds_queries import *
 import polars as pl
 import argparse
 import glob
