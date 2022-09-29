@@ -27,6 +27,9 @@ if __name__ == '__main__':
     runtime = execution_graph.execute()
     print("runtime without optimization (seconds): ", runtime)
 
+    # Cleanup
+    execution_graph.cleanup()
+
     # Dry run workload to collect statistics.
     execution_graph.dry_run(runs=3)
 
@@ -39,3 +42,6 @@ if __name__ == '__main__':
     # Run the workload after optimization.
     runtime = execution_graph.execute()
     print("runtime with optimization (seconds): ", runtime)
+
+    # Cleanup
+    execution_graph.cleanup()
