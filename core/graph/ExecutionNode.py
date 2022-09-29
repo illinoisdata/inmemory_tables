@@ -189,9 +189,9 @@ class ExecutionNode(object):
     """
     def drop_table(self, cursor: Cursor, inmemory_prefix="", on_disk=True):
         if on_disk:
-            cursor.execute("DROP TABLE " + self.node_name)
+            cursor.execute("DROP TABLE IF EXISTS " + self.node_name)
         else:
-            cursor.execute("DROP TABLE " + inmemory_prefix + self.node_name)
+            cursor.execute("DROP TABLE IF EXISTS " + inmemory_prefix + self.node_name)
         cursor.fetchone()
 
         if self.debug:

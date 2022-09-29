@@ -165,3 +165,4 @@ class ExecutionGraph(object):
     def cleanup(self):
         for node_name in self.execution_order:
             self.node_dict[node_name].drop_table()
+            self.node_dict[node_name].drop_table(on_disk=False)
