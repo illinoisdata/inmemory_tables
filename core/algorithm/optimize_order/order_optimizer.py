@@ -37,9 +37,8 @@ class OrderOptimizer(object):
             node_sizes (Dict):
                 the estimated sizes of each node
         """
-    def set_graph(self, graph, cur_execution_order, memory_limit, node_scores, node_sizes):
+    def set_graph(self, graph, memory_limit, node_scores, node_sizes):
         self.graph = graph
-        self.cur_execution_order = cur_execution_order
         self.memory_limit = memory_limit
         self.node_scores = node_scores
         self.node_sizes = node_sizes

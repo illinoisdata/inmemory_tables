@@ -86,42 +86,43 @@ class ExecutionNode(object):
             time_save = 0
 
             # Time of creating this table on disk
-            cursor.execute(self.sql.replace(self.node_name, self_test_node_name))
-            cursor.fetchone()
+            cursor.execute(self.sql.replace(' ' + self.node_name + ' ', ' ' + self_test_node_name + ' '))
+            cursor.fetchall()
             time_save += int(cursor.stats['elapsedTimeMillis']) / 1000
 
             # Time of creating this table in memory
-            cursor.execute(self.sql.replace(self.node_name, self_inmemory_test_node_name))
-            cursor.fetchone()
+            cursor.execute(self.sql.replace(' ' + self.node_name + ' ', ' ' + self_inmemory_test_node_name + ' ')
+                           .replace("with (format = \'PARQUET\')", ""))
+            cursor.fetchall()
             time_save -= int(cursor.stats['elapsedTimeMillis']) / 1000
 
             for table in self.downstream_nodes:
                 downstream_test_node_name = table.get_node_name() + '_test'
 
                 # Time of constructing downstream table as is
-                cursor.execute(table.get_sql().replace(table.get_node_name(), downstream_test_node_name)
-                               .replace(' ' + self.node_name + ' ', ' ' + self_test_node_name + ' '))
-                cursor.fetchone()
+                cursor.execute(table.get_sql().replace(' ' + table.get_node_name() ' ', ' ' + downstream_test_node_name + ' ')
+                               .replace(' ' + self.node_name, ' ' + self_test_node_name))
+                cursor.fetchall()
                 time_save += int(cursor.stats['elapsedTimeMillis']) / 1000
 
                 # Cleanup downstream table
-                cursor.execute("DROP TABLE IF EXISTS " + downstream_test_node_name)
+                cursor.execute("DROP TABLE " + downstream_test_node_name)
                 cursor.fetchone()
 
                 # Time of constructing downstream table given current table is in memory
-                cursor.execute(table.get_sql().replace(table.get_node_name(), downstream_test_node_name)
-                               .replace(' ' + self.node_name + ' ', ' ' + self_inmemory_test_node_name + ' '))
-                cursor.fetchone()
+                cursor.execute(table.get_sql().replace(' ' + table.get_node_name() + ' ', ' ' + downstream_test_node_name + ' ')
+                               .replace(' ' + self.node_name, ' ' + self_inmemory_test_node_name))
+                cursor.fetchall()
                 time_save -= int(cursor.stats['elapsedTimeMillis']) / 1000
 
                 # Cleanup downstream table
-                cursor.execute("DROP TABLE IF EXISTS " + downstream_test_node_name)
+                cursor.execute("DROP TABLE " + downstream_test_node_name)
                 cursor.fetchone()
 
             # Cleanup test tables
-            cursor.execute("DROP TABLE IF EXISTS " + self_test_node_name)
+            cursor.execute("DROP TABLE " + self_test_node_name)
             cursor.fetchone()
-            cursor.execute("DROP TABLE IF EXISTS " + self_inmemory_test_node_name)
+            cursor.execute("DROP TABLE " + self_inmemory_test_node_name)
             cursor.fetchone()
 
             time_save_history.append(time_save)
@@ -145,24 +146,25 @@ class ExecutionNode(object):
     """
     def create_table(self, cursor: Cursor, inmemory_prefix="", flagged_node_names=set(), on_disk=True):
         if self.debug:
-            print("Start executing node " + self.name + ":")
+            print("Start executing node " + self.node_name + ":")
             
         # Append the in-memory prefix to input tables in memory.
         sql_command = self.sql
         for input_name in flagged_node_names.intersection(self.input_node_names):
-            sql_command = sql_command.replace(' ' + input_name + ' ', ' ' + inmemory_prefix + input_name + ' ')
+            sql_command = sql_command.replace(input_name, inmemory_prefix + input_name)
 
         # Append the in-memory prefix to the name of this table if creating in memory.
         if not on_disk:
-            sql_command = sql_command.replace(self.node_name, inmemory_prefix + self.node_name)
+            sql_command = sql_command.replace(' ' + self.node_name + ' ', ' ' + inmemory_prefix + self.node_name + ' ').replace(
+                    "with (format = \'PARQUET\')", "")
 
         # Execute the SQL statement.
         cursor.execute(sql_command)
-        cursor.fetchone()
+        cursor.fetchall()
 
         if self.debug:
             time_elapsed = int(cursor.stats['elapsedTimeMillis']) / 1000
-            print("Finished executing node " + self.name + ". Time elapsed: " + str(time_elapsed))
+            print("Finished executing node " + self.node_name + ". Time elapsed: " + str(time_elapsed))
 
     """
         Materialize the in-memory table to disk.
@@ -190,9 +192,14 @@ class ExecutionNode(object):
     def drop_table(self, cursor: Cursor, inmemory_prefix="", on_disk=True):
         if on_disk:
             cursor.execute("DROP TABLE IF EXISTS " + self.node_name)
+            cursor.fetchone()
+            cursor.execute("DROP TABLE IF EXISTS " + self.node_name + "_test")
+            cursor.fetchone()
         else:
             cursor.execute("DROP TABLE IF EXISTS " + inmemory_prefix + self.node_name)
-        cursor.fetchone()
+            cursor.fetchone()
+            cursor.execute("DROP TABLE IF EXISTS " + inmemory_prefix + self.node_name + "_test")
+            cursor.fetchone()
 
         if self.debug:
-            print("Dropped node " + self.name)
+            print("Dropped node " + self.node_name)

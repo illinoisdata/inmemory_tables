@@ -27,11 +27,12 @@ class Optimizer(object):
     """
 
     def __init__(self, memory_limit: int, nodes_optimizer: NodesOptimizer, order_optimizer: OrderOptimizer,
-                 max_iters=100):
+                 max_iters=100, debug=False):
         self.memory_limit = memory_limit
         self.nodes_optimizer = nodes_optimizer
         self.order_optimizer = order_optimizer
         self.max_iters = max_iters
+        self.debug = debug
 
         # ExecutionGraph object to optimize.
         self.execution_graph = None
@@ -62,15 +63,14 @@ class Optimizer(object):
         self.nodes_to_exclude = set()
         for name in self.execution_graph.graph.nodes:
             if (self.node_sizes[name] > self.memory_limit or
-                    self.node_scores[name] == 0 or
-                    name in self.execution_graph.outputs):
+                    self.node_scores[name] == 0):
                 self.nodes_to_exclude.add(name)
 
         # Sets the graph into the 2 subproblem optimizers.
         self.nodes_optimizer.set_graph(
             self.execution_graph.graph, self.memory_limit, self.node_scores, self.node_sizes, self.nodes_to_exclude)
         self.order_optimizer.set_graph(
-            self.execution_graph.graph, self.memory_limit, self.node_scores, self.node_sizes, self.nodes_to_exclude)
+            self.execution_graph.graph, self.memory_limit, self.node_scores, self.node_sizes)
 
     """
         Run the EM algorithm for joint optimization of execution order & nodes to store in memory.
@@ -99,7 +99,7 @@ class Optimizer(object):
             # Compute time save & peak memory usage of the flagged nodes
             time_save = sum([self.node_scores[i] for i in nodes_to_flag_names])
             peak_memory_usage = compute_peak_memory_usage(
-                self.graph, self.execution_order, self.node_sizes, nodes_to_flag_names)
+                self.execution_graph.graph, self.execution_graph.execution_order, self.node_sizes, nodes_to_flag_names)
 
             if self.debug:
                 print("Nodes to flag:", nodes_to_flag_names)
@@ -127,7 +127,7 @@ class Optimizer(object):
 
             # Compute peak memory usage
             peak_memory_usage = compute_peak_memory_usage(
-                self.graph, execution_order, self.node_sizes, self.flagged_node_names)
+                self.execution_graph.graph, execution_order, self.node_sizes, self.execution_graph.flagged_node_names)
 
             if self.debug:
                 print("Execution order:", execution_order)

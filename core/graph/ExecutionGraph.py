@@ -101,6 +101,7 @@ class ExecutionGraph(object):
         # Cleanup tables
         for node_name in self.execution_order:
             self.node_dict[node_name].drop_table(self.cursor_main)
+            self.node_dict[node_name].drop_table(self.cursor_main, self.inmemory_prefix, on_disk=False)
 
         if self.debug:
             print("Dry run complete.")
@@ -141,10 +142,10 @@ class ExecutionGraph(object):
             node = self.node_dict[node_name]
 
             # Execute current node; create table in memory if node is flagged, create on disk otherwise.
-            node.execute(self.cursor_main, self.inmemory_prefix, self.flagged_node_names,
-                         node_name not in self.flagged_node_names)
+            node.create_table(self.cursor_main, self.inmemory_prefix, self.flagged_node_names,
+                              node_name not in self.flagged_node_names)
 
-            if node_name in self.store_in_memory:
+            if node_name in self.flagged_node_names:
                 self.materialization_queue.put((node))
 
         # Join multithreaded writer
@@ -164,5 +165,5 @@ class ExecutionGraph(object):
     """
     def cleanup(self):
         for node_name in self.execution_order:
-            self.node_dict[node_name].drop_table()
-            self.node_dict[node_name].drop_table(on_disk=False)
+            self.node_dict[node_name].drop_table(self.cursor_main)
+            self.node_dict[node_name].drop_table(self.cursor_main, on_disk=False)
