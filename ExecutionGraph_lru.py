@@ -1,9 +1,8 @@
-import time
 import networkx as nx
 import matplotlib.pyplot as plt
 import threading
 import queue
-from ExecutionNode import *
+
 
 class ExecutionGraph_lru(object):
 

@@ -1,14 +1,6 @@
-from TableReader import *
-from utils import *
-from ExecutionNode import *
-from ExecutionGraph import *
-from Optimizer import *
+from core.algorithm.optimizer import *
 import polars as pl
-import pandas as pd
-import dask as dd
-import argparse
-import os
-import math
+
 
 # Script for converting TPC-DS tables from .dat files to parquet.
 def read_columns():

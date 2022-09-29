@@ -1,7 +1,5 @@
-from ExecutionNode import *
 from TableReader import *
 import polars as pl
-import numpy as np
 
 """
 A file containing select TPC-DS queries translated into equivalent polars

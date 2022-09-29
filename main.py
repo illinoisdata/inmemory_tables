@@ -1,14 +1,10 @@
-from ExecutionNode import *
-from ExecutionGraph import *
-from Optimizer import *
+from core.algorithm.optimizer import *
 from experiment.tpcds_queries import *
-import polars as pl
 import argparse
 import glob
 import os
 import time
 import gc
-from collections import Counter
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

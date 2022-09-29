@@ -1,13 +1,5 @@
-from TableReader import *
-from utils import *
-from ExecutionNode import *
-from ExecutionGraph import *
-from Optimizer import *
+from core.algorithm.optimizer import *
 import polars as pl
-import pandas as pd
-import argparse
-import os
-import math
 
 if __name__ == '__main__':
     tablereader = TableReader()

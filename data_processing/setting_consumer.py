@@ -1,15 +1,8 @@
-from ExecutionNode import *
-from ExecutionGraph import *
-from Optimizer import *
 from tpcds_queries import *
-import polars as pl
 import argparse
 import glob
 import os
-import time
-import gc
 import pickle
-from collections import Counter
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
