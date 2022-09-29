@@ -141,7 +141,7 @@ CREATE TABLE query5_result with (format = 'PARQUET') AS(
 );
 
 
-CREATE TABLE ss with (format = 'PARQUET') AS(
+CREATE TABLE store_sales_join with (format = 'PARQUET') AS(
 select w_store_sk,
          sum(ss_pricing_ext_sales_price) as sales,
          sum(ss_pricing_net_profit) as profit
@@ -154,7 +154,7 @@ select w_store_sk,
  group by w_store_sk
 );
 
-CREATE TABLE sr with (format = 'PARQUET') AS(
+CREATE TABLE store_returns_join with (format = 'PARQUET') AS(
 select w_store_sk,
          sum(sr_pricing_reversed_charge) as returns,
          sum(sr_pricing_net_loss) as profit_loss
@@ -167,7 +167,7 @@ select w_store_sk,
  group by w_store_sk
 );
 
-CREATE TABLE cs with (format = 'PARQUET') AS(
+CREATE TABLE catalog_sales_join with (format = 'PARQUET') AS(
 select cs_call_center_sk,
         sum(cs_pricing_ext_sales_price) as sales,
         sum(cs_pricing_net_profit) as profit
@@ -178,7 +178,7 @@ select cs_call_center_sk,
  group by cs_call_center_sk 
 );
 
-CREATE TABLE cr with (format = 'PARQUET') AS(
+CREATE TABLE catalog_returns_join with (format = 'PARQUET') AS(
 select cr_call_center_sk,
          sum(cr_pricing_reversed_charge) as returns,
          sum(cr_pricing_net_loss) as profit_loss
@@ -189,7 +189,7 @@ select cr_call_center_sk,
  group by cr_call_center_sk
 );
 
-CREATE TABLE ws with (format = 'PARQUET') AS(
+CREATE TABLE web_sales_join with (format = 'PARQUET') AS(
 select wp_page_sk,
         sum(ws_pricing_ext_sales_price) as sales,
         sum(ws_pricing_net_profit) as profit
@@ -202,7 +202,7 @@ select wp_page_sk,
  group by wp_page_sk
 );
 
-CREATE TABLE wr with (format = 'PARQUET') AS(
+CREATE TABLE web_returns_join with (format = 'PARQUET') AS(
 select wp_page_sk,
         sum(wr_pricing_reversed_charge) as returns,
         sum(wr_pricing_net_loss) as profit_loss
@@ -217,28 +217,28 @@ select wp_page_sk,
 
 CREATE TABLE x2 with (format = 'PARQUET') AS(
 select 'store channel' as channel
-        , ss.w_store_sk as id
+        , store_sales_join.w_store_sk as id
         , sales
         , coalesce(returns, 0) as returns
         , (profit - coalesce(profit_loss,0)) as profit
- from   ss left join sr
-        on  ss.w_store_sk = sr.w_store_sk
+ from   store_sales_join left join store_returns_join
+        on  store_sales_join.w_store_sk = store_returns_join.w_store_sk
  union all
  select 'catalog channel' as channel
         , cs_call_center_sk as id
         , sales
         , returns
         , (profit - profit_loss) as profit
- from  cs
-       , cr
+ from  catalog_sales_join
+       , catalog_returns_join
  union all
  select 'web channel' as channel
-        , ws.wp_page_sk as id
+        , web_sales_join.wp_page_sk as id
         , sales
         , coalesce(returns, 0) as returns
         , (profit - coalesce(profit_loss,0)) as profit
- from   ws left join wr
-        on  ws.wp_page_sk = wr.wp_page_sk
+ from   web_sales_join left join web_returns_join
+        on  web_sales_join.wp_page_sk = web_returns_join.wp_page_sk
  
 );
 
