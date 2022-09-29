@@ -27,11 +27,11 @@ if __name__ == '__main__':
     runtime = execution_graph.execute()
     print("runtime without optimization (seconds): ", runtime)
 
-    # Cleanup
-    execution_graph.cleanup()
-
     # Dry run workload to collect statistics.
     execution_graph.dry_run(runs=3)
+
+    # Cleanup
+    execution_graph.cleanup()
 
     # Jointly optimize nodes to flag and execution order.
     nodes_optimizer = FlagNodesMkp(debug=True)
