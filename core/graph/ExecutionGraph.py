@@ -8,11 +8,9 @@ from prestodb.dbapi import Cursor
 
 from core.algorithm.optimizer import Optimizer
 from core.graph.ExecutionNode import ExecutionNode
-import matplotlib.pyplot as plt
 import networkx as nx
 import threading
 import queue
-
 
 
 class ExecutionGraph(object):
@@ -47,7 +45,7 @@ class ExecutionGraph(object):
         # Split the workload into individual SQL statements
         sqls = workload.replace('\n', ' ').split(';')
         for sql in sqls:
-            if len(sql) == 0:
+            if sql.isspace():
                 continue
 
             # Create an execution node for each SQL statement
@@ -67,11 +65,6 @@ class ExecutionGraph(object):
             for input_node_name in node.get_input_node_names():
                 self.graph.add_edge(input_node_name, node_name)
                 self.node_dict[input_node_name].add_downstream_node(node)
-
-        if debug:
-            print("Displaying workload graph structure:")
-            nx.draw(self.graph, with_labels=True)
-            plt.show()
 
         # Joint optimization outputs; use a default topological order as the execution order and flag no nodes.
         self.execution_order = list(nx.topological_sort(self.graph))
@@ -163,3 +156,12 @@ class ExecutionGraph(object):
 
         if self.debug:
             print("total execution time:", execution_end_time - execution_start_time)
+
+        return execution_end_time - execution_start_time
+
+    """
+       Drop all tables in the workload.
+    """
+    def cleanup(self):
+        for node_name in self.execution_order:
+            self.node_dict[node_name].drop_table()

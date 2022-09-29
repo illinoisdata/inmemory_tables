@@ -17,7 +17,7 @@ class FlagNodesGreedy(NodesOptimizer):
     def __init__(self, debug=False):
         super().__init__(debug)
 
-    def flag_nodes(self) -> set(str):
+    def flag_nodes(self) -> set:
         # Keep track of when to simulate garbage collection of results
         num_successors = [len(list(self.graph.successors(i))) for i in self.execution_order]
         num_successors_dict = dict(zip(self.execution_order, num_successors))

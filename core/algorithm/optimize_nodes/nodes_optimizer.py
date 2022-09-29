@@ -55,7 +55,7 @@ class NodesOptimizer(object):
     def set_execution_order(self, execution_order: List):
         self.execution_order = execution_order
 
-    def flag_nodes(self) -> set(str):
+    def flag_nodes(self) -> set:
         """
             Classes that inherit from the `NodesOptimizer` class (such as `MKP` and various baselines) should override
             `flag_nodes`.

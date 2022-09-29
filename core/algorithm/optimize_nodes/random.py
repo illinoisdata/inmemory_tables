@@ -20,7 +20,7 @@ class FlagNodesRandom(NodesOptimizer):
     def __init__(self, debug=False):
         super().__init__(debug)
 
-    def flag_nodes(self) -> set(str):
+    def flag_nodes(self) -> set:
         nodes_to_flag_names = set()
         # iterate through nodes in random order
         for name in np.random.permutation(self.execution_order):

@@ -17,7 +17,7 @@ class FlagAllBaseline(NodesOptimizer):
     def __init__(self, debug=False):
         super().__init__(debug)
 
-    def flag_nodes(self) -> set(str):
+    def flag_nodes(self) -> set:
         nodes_to_flag_names = set()
         for node in self.graph.nodes:
             if node not in self.nodes_to_exclude:
@@ -38,5 +38,5 @@ class FlagNoneBaseline(NodesOptimizer):
     def __init__(self, debug=False):
         super().__init__(debug)
 
-    def flag_nodes(self) -> set(str):
+    def flag_nodes(self) -> set:
         return set()

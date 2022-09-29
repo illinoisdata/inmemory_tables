@@ -40,7 +40,7 @@ class ExecutionNode(object):
     def get_node_name(self) -> str:
         return self.node_name
 
-    def get_input_node_names(self) -> set(str):
+    def get_input_node_names(self) -> set:
         return self.input_node_names
 
     def add_downstream_node(self, node):

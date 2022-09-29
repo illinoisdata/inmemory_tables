@@ -68,7 +68,7 @@ class FlagNodesMkp(NodesOptimizer):
 
         return maximal_sets
 
-    def flag_nodes(self) -> set(str):
+    def flag_nodes(self) -> set:
         # Find maximal sets.
         maximal_sets = self.find_maximal_sets()
 
