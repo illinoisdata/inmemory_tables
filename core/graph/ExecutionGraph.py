@@ -148,6 +148,9 @@ class ExecutionGraph(object):
             if node_name in self.flagged_node_names:
                 self.materialization_queue.put((node))
 
+        if self.debug:
+            print("waiting for materialization thread to finish. Time elapsed:", time.time() - execution_start_time)
+
         # Join multithreaded writer
         self.materialization_queue.put(None)
         self.materialization_thread.join()
@@ -164,6 +167,9 @@ class ExecutionGraph(object):
        Drop all tables in the workload.
     """
     def cleanup(self):
+        if self.debug:
+            print("Cleaning up tables.................................")
+
         for node_name in self.execution_order:
             self.node_dict[node_name].drop_table(self.cursor_main)
             self.node_dict[node_name].drop_table(self.cursor_main, on_disk=False)

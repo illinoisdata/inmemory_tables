@@ -11,14 +11,14 @@ import prestodb
 
 if __name__ == '__main__':
     # Read workload
-    f = open("workloads/workload1.txt", "r")
+    f = open("workloads/workload5.txt", "r")
     workload = f.read()
 
     # Create 2 Presto connections
     cursor_main = prestodb.dbapi.connect(host='localhost', port=8090, user='zl20', catalog='hive',
-                                         schema='tpcds_10_new_parquet').cursor()
+                                         schema='tpcds_10_new').cursor()
     cursor_materialization = prestodb.dbapi.connect(host='localhost', port=8090, user='zl20', catalog='hive',
-                                                    schema='tpcds_10_new_parquet').cursor()
+                                                    schema='tpcds_10_new').cursor()
 
     # Create the execution graph
     execution_graph = ExecutionGraph(cursor_main, cursor_materialization, 'memory.default.', workload, debug=True)
@@ -27,11 +27,11 @@ if __name__ == '__main__':
     execution_graph.cleanup()
 
     # Run the workload without any optimization.
-    #runtime = execution_graph.execute()
-    #print("runtime without optimization (seconds): ", runtime)
+    runtime = execution_graph.execute()
+    print("runtime without optimization (seconds): ", runtime)
 
     # Cleanuo
-    #execution_graph.cleanup()
+    execution_graph.cleanup()
 
     # Dry run workload to collect statistics.
     execution_graph.dry_run(runs=1)
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     # Jointly optimize nodes to flag and execution order.
     nodes_optimizer = FlagNodesMkp(debug=True)
     order_optimizer = OptimizeOrderMADFS(debug=True)
-    optimizer = Optimizer(4000000000, nodes_optimizer, order_optimizer, debug=True)
+    optimizer = Optimizer(200000000, nodes_optimizer, order_optimizer, debug=True)
     execution_graph.optimize(optimizer)
 
     # Run the workload after optimization.

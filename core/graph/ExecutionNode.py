@@ -100,7 +100,7 @@ class ExecutionNode(object):
                 downstream_test_node_name = table.get_node_name() + '_test'
 
                 # Time of constructing downstream table as is
-                cursor.execute(table.get_sql().replace(' ' + table.get_node_name() ' ', ' ' + downstream_test_node_name + ' ')
+                cursor.execute(table.get_sql().replace(' ' + table.get_node_name() + ' ', ' ' + downstream_test_node_name + ' ')
                                .replace(' ' + self.node_name, ' ' + self_test_node_name))
                 cursor.fetchall()
                 time_save += int(cursor.stats['elapsedTimeMillis']) / 1000
