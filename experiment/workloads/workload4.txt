@@ -4,7 +4,7 @@ select avg(ss_pricing_net_profit) rank_col
     group by ss_sold_item_sk
 );
 
-CREATE TABLE V1 with (format = 'PARQUET') AS(
+CREATE TABLE ver1 with (format = 'PARQUET') AS(
 select ss_sold_item_sk item_sk,avg(ss_pricing_net_profit) rank_col 
                  from store_sales ss1
                  group by ss_sold_item_sk
@@ -13,30 +13,30 @@ select ss_sold_item_sk item_sk,avg(ss_pricing_net_profit) rank_col
 
 CREATE TABLE V11 with (format = 'PARQUET') AS(
 select item_sk,rank() over (order by rank_col asc) rnk
-           from V1
+           from ver1
 );
 
 CREATE TABLE asceding with (format = 'PARQUET') AS(
 select *
-     from V11
+     from ver1_rank
      where rnk  < 11
 );
 
-CREATE TABLE V2 with (format = 'PARQUET') AS(
+CREATE TABLE ver2 with (format = 'PARQUET') AS(
 select ss_sold_item_sk item_sk,avg(ss_pricing_net_profit) rank_col 
                  from store_sales ss1
                  group by ss_sold_item_sk
                  having avg(ss_pricing_net_profit) > 0.9*(select avg(rank_col) from avg_q44)
 );
 
-CREATE TABLE V21 with (format = 'PARQUET') AS(
+CREATE TABLE ver2_rank with (format = 'PARQUET') AS(
 select item_sk,rank() over (order by rank_col desc) rnk
-           from V2
+           from ver2
 );
 
 CREATE TABLE descending with (format = 'PARQUET') AS(
 select *
-     from V21
+     from ver2_rank
      where rnk  < 11
 );
 
@@ -75,7 +75,7 @@ select ws.ws_item_sk as item
  		group by ws.ws_item_sk
 );
 
-CREATE TABLE web with (format = 'PARQUET') AS(
+CREATE TABLE web_rank with (format = 'PARQUET') AS(
  	select 
  	 item
  	,return_ratio
@@ -108,7 +108,7 @@ select
                  group by cs.cs_sold_item_sk
 );
 
-CREATE TABLE catalog with (format = 'PARQUET') AS(
+CREATE TABLE catalog_rank with (format = 'PARQUET') AS(
 select 
  	 item
  	,return_ratio
@@ -149,30 +149,30 @@ select
 CREATE TABLE tmp_q49 with (format = 'PARQUET') AS(
 select
  'web' as channel
- ,web.item
- ,web.return_ratio
- ,web.return_rank
- ,web.currency_rank
- from web
+ ,web_rank.item
+ ,web_rank.return_ratio
+ ,web_rank.return_rank
+ ,web_rank.currency_rank
+ from web_rank
  where 
  (
- web.return_rank <= 10
+ web_rank.return_rank <= 10
  or
- web.currency_rank <= 10
+ web_rank.currency_rank <= 10
  )
  union
  select 
  'catalog' as channel
- ,catalog.item
- ,catalog.return_ratio
- ,catalog.return_rank
- ,catalog.currency_rank
- from catalog
+ ,catalog_rank.item
+ ,catalog_rank.return_ratio
+ ,catalog_rank.return_rank
+ ,catalog_rank.currency_rank
+ from catalog_rank
  where 
  (
- catalog.return_rank <= 10
+ catalog_rank.return_rank <= 10
  or
- catalog.currency_rank <=10
+ catalog_rank.currency_rank <=10
  )
  union
  select 
