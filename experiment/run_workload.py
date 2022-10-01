@@ -19,9 +19,11 @@ if __name__ == '__main__':
                                          schema='tpcds_10_rc').cursor()
     cursor_materialization = prestodb.dbapi.connect(host='localhost', port=8090, user='zl20', catalog='hive',
                                                     schema='tpcds_10_rc').cursor()
+    cursor_gc = prestodb.dbapi.connect(host='localhost', port=8090, user='zl20', catalog='hive',
+                                       schema='tpcds_10_rc').cursor()
 
     # Create the execution graph
-    execution_graph = ExecutionGraph(cursor_main, cursor_materialization, 'memory.default.', workload, debug=True)
+    execution_graph = ExecutionGraph(cursor_main, cursor_materialization, cursor_gc, 'memory.default.', workload, debug=True)
 
     # Cleanup
     execution_graph.cleanup()

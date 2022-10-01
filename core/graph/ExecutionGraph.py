@@ -140,7 +140,7 @@ class ExecutionGraph(object):
         """
 
     def gc_func(self):
-        for node in iter(self.materialization_queue.get, None):
+        for node in iter(self.gc_queue.get, None):
             node.drop_table(self.cursor_gc, self.inmemory_prefix, on_disk=False, block=False)
         try:
             self.cursor_gc.fetchall()
@@ -161,12 +161,12 @@ class ExecutionGraph(object):
         self.materialization_thread.start()
 
         # Start multithreaded table garbage collector
-        self.materialization_thread = threading.Thread(target=self.materialization_func)
-        self.materialization_thread.start()
+        self.gc_thread = threading.Thread(target=self.gc_func)
+        self.gc_thread.start()
 
         # Maintain a list of successors yet to be computed for each node; garbage collect an in-memory table
         # When all of its downstream tables are computed.
-        num_successors_dict = {node.get_node_name(): len(node.downstream_nodes) for node in self.execution_order}
+        num_successors_dict = {node_name: len(node.downstream_nodes) for node_name, node in self.node_dict.items()}
 
         # Run nodes in given execution order
         for node_name in self.execution_order:
