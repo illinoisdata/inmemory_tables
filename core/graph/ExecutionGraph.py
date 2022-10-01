@@ -22,14 +22,17 @@ class ExecutionGraph(object):
         cursor_main (prestodb.Cursor): a cursor for executing Presto queries.
         cursor_materialization (prestodb.Cursor): a cursor given to the materialization queue to materialize
             tables in a separate thread.
+        cursor_gc (prestodb.Cursor): a cursor given to the garbage collection queue to drop in-memory tables
+            when (i) all of its downstream tables have been computed and (ii) it has been materialized to disk.
         inmemory_prefix (str): the prefix for the schema of the in-memory catalog to keep tables in.
         workload (str): A set of ';' delimited SQL DDL statements for creating tables/MVs.
         debug (bool): whether to print debug message during execution.
     """
-    def __init__(self, cursor_main: Cursor, cursor_materialization: Cursor, inmemory_prefix: str,
+    def __init__(self, cursor_main: Cursor, cursor_materialization: Cursor, cursor_gc: Cursor, inmemory_prefix: str,
                  workload: str, debug=False):
         self.cursor_main = cursor_main
         self.cursor_materialization = cursor_materialization
+        self.cursor_gc = cursor_gc
         self.inmemory_prefix = inmemory_prefix
 
         # The graph representation of the current workload.
@@ -73,6 +76,10 @@ class ExecutionGraph(object):
         # Queue & thread for multithreaded materialization of in-memory tables.
         self.materialization_queue = queue.Queue()
         self.materialization_thread = None
+
+        # Queue & thread for multithreaded garbage collection of in-memory tables.
+        self.gc_queue = queue.Queue()
+        self.gc_thread = None
 
     """
         Dry run the workload to collect statistics on estimated table sizes and time savings.
@@ -123,7 +130,22 @@ class ExecutionGraph(object):
     def materialization_func(self):
         for node in iter(self.materialization_queue.get, None):
             node.materialize_table(self.cursor_materialization, self.inmemory_prefix)
-        self.cursor_materialization.fetchall()
+        try:
+            self.cursor_materialization.fetchall()
+        except:
+            pass
+
+    """
+            Separate materialization thread for parallel materialization of in-memory tables.
+        """
+
+    def gc_func(self):
+        for node in iter(self.materialization_queue.get, None):
+            node.drop_table(self.cursor_gc, self.inmemory_prefix, on_disk=False, block=False)
+        try:
+            self.cursor_gc.fetchall()
+        except:
+            pass
 
     """
         Run the workload and refresh the MVs.
@@ -138,6 +160,14 @@ class ExecutionGraph(object):
         self.materialization_thread = threading.Thread(target=self.materialization_func)
         self.materialization_thread.start()
 
+        # Start multithreaded table garbage collector
+        self.materialization_thread = threading.Thread(target=self.materialization_func)
+        self.materialization_thread.start()
+
+        # Maintain a list of successors yet to be computed for each node; garbage collect an in-memory table
+        # When all of its downstream tables are computed.
+        num_successors_dict = {node.get_node_name(): len(node.downstream_nodes) for node in self.execution_order}
+
         # Run nodes in given execution order
         for node_name in self.execution_order:
             node = self.node_dict[node_name]
@@ -146,8 +176,14 @@ class ExecutionGraph(object):
             node.create_table(self.cursor_main, self.inmemory_prefix, self.flagged_node_names,
                               node_name not in self.flagged_node_names)
 
+            # Concurrent materialization of in-memory table
             if node_name in self.flagged_node_names:
-                self.materialization_queue.put((node))
+                self.materialization_queue.put(node)
+
+            # Concurrent garbage collection of in-memory table
+            num_successors_dict[node_name] -= 1
+            if num_successors_dict[node_name] == 0 and node_name in self.flagged_node_names:
+                self.gc_queue.put(node)
 
         if self.debug:
             print("waiting for materialization thread to finish. Time elapsed:", time.time() - execution_start_time)
@@ -155,6 +191,10 @@ class ExecutionGraph(object):
         # Join multithreaded writer
         self.materialization_queue.put(None)
         self.materialization_thread.join()
+
+        # Join multithreaded garbage collector
+        self.gc_queue.put(None)
+        self.gc_thread.join()
 
         # Compute execution time breakdown
         execution_end_time = time.time()

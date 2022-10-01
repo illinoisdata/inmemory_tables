@@ -190,17 +190,15 @@ class ExecutionNode(object):
             cursor (prestodb.Cursor): a cursor for executing Presto queries.
             inmemory_prefix (str): the prefix for the schema of the in-memory catalog.
             on_disk (int): whether the table to drop is on disk. If false, the table to drop is in memory.
+            block(bool): whether this operation should be blocking.
     """
-    def drop_table(self, cursor: Cursor, inmemory_prefix="", on_disk=True):
+    def drop_table(self, cursor: Cursor, inmemory_prefix="", on_disk=True, block=True):
         if on_disk:
             cursor.execute("DROP TABLE IF EXISTS " + self.node_name)
-            cursor.fetchone()
-            cursor.execute("DROP TABLE IF EXISTS " + self.node_name + "_test")
-            cursor.fetchone()
         else:
             cursor.execute("DROP TABLE IF EXISTS " + inmemory_prefix + self.node_name)
-            cursor.fetchone()
-            cursor.execute("DROP TABLE IF EXISTS " + inmemory_prefix + self.node_name + "_test")
+
+        if block:
             cursor.fetchone()
 
         if self.debug:
