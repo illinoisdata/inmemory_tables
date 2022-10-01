@@ -32,6 +32,7 @@ class ExecutionNode(object):
         self.table_size = 0
 
         # Estimated time saving for workload by keeping this table in memory.
+        self.time_save_history = 0
         self.time_save = 0
 
     def get_sql(self) -> str:
@@ -81,7 +82,7 @@ class ExecutionNode(object):
         self_test_node_name = self.node_name + '_test'
         self_inmemory_test_node_name = inmemory_prefix + self.node_name + '_test'
 
-        time_save_history = []
+        self.time_save_history = []
         for i in range(runs):
             time_save = 0
 
@@ -125,9 +126,9 @@ class ExecutionNode(object):
             cursor.execute("DROP TABLE " + self_inmemory_test_node_name)
             cursor.fetchone()
 
-            time_save_history.append(time_save)
+            self.time_save_history.append(time_save)
 
-        self.time_save = max(sum(time_save_history) / runs, 0)
+        self.time_save = max(sum(self.time_save_history) / runs, 0)
 
         if self.debug:
             print("Est. time save (seconds) of keeping " + self.node_name + " in memory: " + str(self.time_save))
