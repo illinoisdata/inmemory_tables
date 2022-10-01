@@ -11,14 +11,14 @@ import prestodb
 
 if __name__ == '__main__':
     # Read workload
-    f = open("workloads/workload5.txt", "r")
+    f = open("workloads/workload1.txt", "r")
     workload = f.read()
 
     # Create 2 Presto connections
     cursor_main = prestodb.dbapi.connect(host='localhost', port=8090, user='zl20', catalog='hive',
-                                         schema='tpcds_10_new').cursor()
+                                         schema='tpcds_10_rc').cursor()
     cursor_materialization = prestodb.dbapi.connect(host='localhost', port=8090, user='zl20', catalog='hive',
-                                                    schema='tpcds_10_new').cursor()
+                                                    schema='tpcds_10_rc').cursor()
 
     # Create the execution graph
     execution_graph = ExecutionGraph(cursor_main, cursor_materialization, 'memory.default.', workload, debug=True)

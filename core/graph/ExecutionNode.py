@@ -177,9 +177,11 @@ class ExecutionNode(object):
         sql_command = "CREATE TABLE " + self.node_name + " WITH (format = 'PARQUET') AS (SELECT * FROM " + \
             inmemory_prefix + self.node_name + ")"
 
+        if self.debug:
+            print("Start materializing node " + self.node_name + "...............")
+
         # Execute the SQL statement.
         cursor.execute(sql_command)
-        cursor.fetchone()
 
     """
         Drop the created table.

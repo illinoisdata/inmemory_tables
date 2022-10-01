@@ -123,6 +123,7 @@ class ExecutionGraph(object):
     def materialization_func(self):
         for node in iter(self.materialization_queue.get, None):
             node.materialize_table(self.cursor_materialization, self.inmemory_prefix)
+        self.cursor_materialization.fetchall()
 
     """
         Run the workload and refresh the MVs.
