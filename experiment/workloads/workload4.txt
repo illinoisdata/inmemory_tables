@@ -11,7 +11,7 @@ select ss_sold_item_sk item_sk,avg(ss_pricing_net_profit) rank_col
                  having avg(ss_pricing_net_profit) > 0.9*(select avg(rank_col) from avg_q44)
 );
 
-CREATE TABLE V11 with (format = 'PARQUET') AS(
+CREATE TABLE ver1_rank with (format = 'PARQUET') AS(
 select item_sk,rank() over (order by rank_col asc) rnk
            from ver1
 );
