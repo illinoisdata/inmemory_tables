@@ -4,7 +4,7 @@ select avg(ss_pricing_net_profit) rank_col
     group by ss_sold_item_sk
 );
 
-CREATE TABLE ver1 with (format = 'PARQUET') AS(
+CREATE TABLE ver1_base with (format = 'PARQUET') AS(
 select ss_sold_item_sk item_sk,avg(ss_pricing_net_profit) rank_col 
                  from store_sales ss1
                  group by ss_sold_item_sk
@@ -13,7 +13,7 @@ select ss_sold_item_sk item_sk,avg(ss_pricing_net_profit) rank_col
 
 CREATE TABLE ver1_rank with (format = 'PARQUET') AS(
 select item_sk,rank() over (order by rank_col asc) rnk
-           from ver1
+           from ver1_base
 );
 
 CREATE TABLE asceding with (format = 'PARQUET') AS(
@@ -22,7 +22,7 @@ select *
      where rnk  < 11
 );
 
-CREATE TABLE ver2 with (format = 'PARQUET') AS(
+CREATE TABLE ver2_base with (format = 'PARQUET') AS(
 select ss_sold_item_sk item_sk,avg(ss_pricing_net_profit) rank_col 
                  from store_sales ss1
                  group by ss_sold_item_sk
@@ -31,7 +31,7 @@ select ss_sold_item_sk item_sk,avg(ss_pricing_net_profit) rank_col
 
 CREATE TABLE ver2_rank with (format = 'PARQUET') AS(
 select item_sk,rank() over (order by rank_col desc) rnk
-           from ver2
+           from ver2_base
 );
 
 CREATE TABLE descending with (format = 'PARQUET') AS(
