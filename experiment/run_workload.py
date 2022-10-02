@@ -11,7 +11,7 @@ import prestodb
 
 if __name__ == '__main__':
     # Read workload
-    f = open("workloads/workload1.txt", "r")
+    f = open("workloads/workload2.txt", "r")
     workload = f.read()
 
     # Create 2 Presto connections
