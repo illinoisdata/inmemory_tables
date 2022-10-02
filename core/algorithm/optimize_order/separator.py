@@ -5,7 +5,6 @@
 from typing import List
 
 from core.algorithm.optimize_order.order_optimizer import OrderOptimizer
-from core.utils import compute_peak_memory_usage
 import networkx as nx
 
 
