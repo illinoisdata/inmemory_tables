@@ -286,12 +286,12 @@ where i_category in ('Books', 'Home', 'Electronics',
 CREATE TABLE promotional_sales with (format = 'PARQUET') AS(
 select sum(ss_pricing_ext_sales_price) promotions
    from  store_sales
-        ,store
-        ,promotion
-        ,date_dim
-        ,customer
-        ,customer_address 
-        ,category_q61
+        , store
+        , promotion
+        , date_dim
+        , customer
+        , customer_address
+        , category_q61
    where ss_sold_date_sk = d_date_sk
    and   ss_sold_store_sk = w_store_sk
    and   ss_sold_promo_sk = p_promo_sk
@@ -308,11 +308,11 @@ select sum(ss_pricing_ext_sales_price) promotions
 CREATE TABLE all_sales with (format = 'PARQUET') AS(
 select sum(ss_pricing_ext_sales_price) total
    from  store_sales
-        ,store
-        ,date_dim
-        ,customer
-        ,customer_address
-        ,category_q61
+        , store
+        , date_dim
+        , customer
+        , customer_address
+        , category_q61
    where ss_sold_date_sk = d_date_sk
    and   ss_sold_store_sk = w_store_sk
    and   ss_sold_customer_sk = c_customer_sk
