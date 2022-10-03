@@ -91,7 +91,7 @@ class OptimizeOrderSA(OrderOptimizer):
         temperature = \
             max(list(self.memory_usage.values())) / len(list(self.memory_usage.values()))
 
-        for i in range(self.n_iters):
+        for i in range(self.num_iters):
             # Select some random node
             u = random.randint(0, len(self.cur_execution_order) - 1)
             max_parent = max([node_name_to_idx[p] for p in self.graph.predecessors(node_idx_to_name[u])], default=0)
