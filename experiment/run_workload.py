@@ -11,7 +11,7 @@ import prestodb
 
 if __name__ == '__main__':
     # Read workload
-    f = open("workloads/workload2.txt", "r")
+    f = open("workloads/workload1.txt", "r")
     workload = f.read()
 
     # Create 2 Presto connections
@@ -29,11 +29,11 @@ if __name__ == '__main__':
     execution_graph.cleanup()
 
     # Run the workload without any optimization.
-    runtime = execution_graph.execute()
-    print("runtime without optimization (seconds): ", runtime)
+    #runtime = execution_graph.execute()
+    #print("runtime without optimization (seconds): ", runtime)
 
     # Cleanuo
-    execution_graph.cleanup()
+    #execution_graph.cleanup()
 
     # Dry run workload to collect statistics.
     execution_graph.dry_run(runs=1)

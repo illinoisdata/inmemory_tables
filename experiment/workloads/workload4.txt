@@ -83,7 +83,7 @@ CREATE TABLE web_rank with (format = 'PARQUET') AS(
  	,rank() over (order by return_ratio) as return_rank
  	,rank() over (order by currency_ratio) as currency_rank
  	from
- 	in_web
+        in_web
 );
 
 CREATE TABLE in_cat with (format = 'PARQUET') AS(

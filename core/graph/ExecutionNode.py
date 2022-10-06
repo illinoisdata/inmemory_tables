@@ -152,7 +152,7 @@ class ExecutionNode(object):
         # Append the in-memory prefix to input tables in memory.
         sql_command = self.sql
         for input_name in flagged_node_names.intersection(self.input_node_names):
-            sql_command = sql_command.replace(input_name, inmemory_prefix + input_name)
+            sql_command = sql_command.replace(' ' + input_name, ' ' + inmemory_prefix + input_name)
 
         # Append the in-memory prefix to the name of this table if creating in memory.
         if not on_disk:
@@ -195,12 +195,14 @@ class ExecutionNode(object):
     """
     def drop_table(self, cursor: Cursor, inmemory_prefix="", on_disk=True, block=True):
         if on_disk:
-            cursor.execute("DROP TABLE IF EXISTS " + self.node_name)
+            sql_command = "DROP TABLE IF EXISTS " + self.node_name
         else:
-            cursor.execute("DROP TABLE IF EXISTS " + inmemory_prefix + self.node_name)
-
-        if block:
-            cursor.fetchone()
+            sql_command = "DROP TABLE IF EXISTS " + inmemory_prefix + self.node_name
 
         if self.debug:
-            print("Dropped node " + self.node_name)
+            print("Dropping node:" , sql_command)
+
+        cursor.execute(sql_command)
+
+        if block:
+            text = cursor.fetchall()

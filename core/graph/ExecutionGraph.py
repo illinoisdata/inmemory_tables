@@ -130,10 +130,13 @@ class ExecutionGraph(object):
     def materialization_func(self):
         for node in iter(self.materialization_queue.get, None):
             node.materialize_table(self.cursor_materialization, self.inmemory_prefix)
-        try:
-            self.cursor_materialization.fetchall()
-        except:
-            pass
+
+        # Block & wait for materialization to finish
+        while True:
+            try:
+                self.cursor_materialization.fetchall()
+            except:
+                break
 
     """
             Separate materialization thread for parallel materialization of in-memory tables.
@@ -142,10 +145,13 @@ class ExecutionGraph(object):
     def gc_func(self):
         for node in iter(self.gc_queue.get, None):
             node.drop_table(self.cursor_gc, self.inmemory_prefix, on_disk=False, block=False)
-        try:
-            self.cursor_gc.fetchall()
-        except:
-            pass
+
+        # Block & wait for garbage collection to finish
+        while True:
+            try:
+                self.cursor_gc.fetchall()
+            except:
+                break
 
     """
         Run the workload and refresh the MVs.
@@ -213,4 +219,4 @@ class ExecutionGraph(object):
 
         for node_name in self.execution_order:
             self.node_dict[node_name].drop_table(self.cursor_main)
-            self.node_dict[node_name].drop_table(self.cursor_main, on_disk=False)
+            self.node_dict[node_name].drop_table(self.cursor_main, inmemory_prefix = self.inmemory_prefix, on_disk=False)
