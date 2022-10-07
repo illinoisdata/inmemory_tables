@@ -42,7 +42,6 @@ CREATE TABLE ssu_q14 with (format = 'PARQUET') AS(
 select ss_pricing_quantity quantity
              ,ss_pricing_list_price list_price
        from store_sales_1999_2000
-           ,date_dim
 );
 
 CREATE TABLE csu_q14 with (format = 'PARQUET') AS(
