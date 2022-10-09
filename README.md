@@ -6,12 +6,12 @@ Speed up MV refresh workloads by keeping intermediate data in memory.
 - Install Presto on your machine.
 - Create the Hive and Memory connectors for your Presto server.
 - Load the TPC-DS tables into the Hive catalog.
-- Modify the connectors in experiment/run_workload.py to connect to your Presto server.
+- Modify the connectors in `experiment/run_workload.py` to connect to your Presto server.
 - Experiment with different optimizers and workloads. Enjoy!
 
 ## Workloads:
 
-All workloads can be found in experiment/workloads:
+All workloads can be found in `experiment/workloads`:
 - For TPC-DS dataset:
   - Workload 1 -> I/O 1
   - Workload 2 -> Compute 1
