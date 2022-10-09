@@ -20,8 +20,7 @@ class FlagAllBaseline(NodesOptimizer):
     def flag_nodes(self) -> set:
         nodes_to_flag_names = set()
         for node in self.graph.nodes:
-            if node not in self.nodes_to_exclude:
-                nodes_to_flag_names.add(node)
+            nodes_to_flag_names.add(node)
 
         return nodes_to_flag_names
 

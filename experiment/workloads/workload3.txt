@@ -1,17 +1,13 @@
-CREATE TABLE aaa with (format = 'PARQUET') AS(
-   select ws_sold_date_sk sold_date_sk
+CREATE TABLE wscs with (format = 'PARQUET') AS(
+select sold_date_sk
+        ,sales_price
+  from  (select ws_sold_date_sk sold_date_sk
               ,ws_pricing_ext_sales_price sales_price
         from web_sales
         union all
         select cs_sold_date_sk sold_date_sk
               ,cs_pricing_ext_sales_price sales_price
-        from catalog_sales
-);
-
-CREATE TABLE wscs with (format = 'PARQUET') AS(
-select sold_date_sk
-        ,sales_price
-  from aaa
+        from catalog_sales) as aaa
 );
 
 CREATE TABLE wswscs with (format = 'PARQUET') AS(
