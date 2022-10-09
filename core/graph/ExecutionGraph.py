@@ -45,10 +45,21 @@ class ExecutionGraph(object):
         if self.debug:
             print("Creating nodes...................................")
 
+        self.execution_order = None
+        self.flagged_node_names = None
+
+        # Queue & thread for multithreaded materialization of in-memory tables.
+        self.materialization_queue = None
+        self.materialization_thread = None
+
+        # Queue & thread for multithreaded garbage collection of in-memory tables.
+        self.gc_queue = None
+        self.gc_thread = None
+
         # Split the workload into individual SQL statements
         sqls = workload.replace('\n', ' ').split(';')
         for sql in sqls:
-            if sql.isspace():
+            if sql.isspace() or sql == "":
                 continue
 
             # Create an execution node for each SQL statement
@@ -59,6 +70,9 @@ class ExecutionGraph(object):
             if self.debug:
                 print("Created node for table " + node.get_node_name())
 
+            self.build_graph()
+
+    def build_graph(self):
         # Remove base table names from dependencies
         for node in self.node_dict.values():
             node.input_node_names = node.get_input_node_names().intersection(set(self.node_dict.keys()))

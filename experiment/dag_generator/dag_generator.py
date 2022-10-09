@@ -1,12 +1,7 @@
-import string
 import re
 from copy import deepcopy
 import numpy as np
 from matplotlib import pyplot as plt
-import seaborn as sns
-import pandas as pd
-import sqlparse
-from termcolor import colored
 import random,math,argparse
 from numpy.random.mtrand import sample
 import networkx as nx
@@ -382,14 +377,18 @@ def run_dag_experiments(graph_size, n_experiments):
         # Execution
         dag_execution(node_info_dict, base_table_sizes)
 
-        # compute time save scores
+        # compute speedup score
         node_info_dict['serialize_time'] = []
         node_info_dict['deserialize_time'] = []
+        node_info_dict['speedup_score'] = []
         for i in range(len(node_info_dict['size_out'])):
             node_info_dict['serialize_time'].append(
                 node_info_dict['size_out'][i] / 1000000000 * np.random.uniform(0.9, 1.1))
             node_info_dict['deserialize_time'].append(
                 node_info_dict['size_out'][i] / 1000000000 * np.random.uniform(0.9, 1.1))
+            node_info_dict['speedup_score'].append(
+                node_info_dict['serialize_time'][i] +
+                node_info_dict['deserialize_time'][i] * node_info_dict['out_degrees'][i])
         execution_results.append(node_info_dict)
         
     return execution_results

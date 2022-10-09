@@ -1,119 +1,53 @@
 from core.algorithm.optimizer import *
-from tpcds_queries import *
+from core.algorithm.optimize_nodes.heuristic import FlagNodesHeuristic
+from core.algorithm.optimize_order.ma_dfs import OptimizeOrderMADFS
+from core.graph.ExecutionGraph import ExecutionGraph
+from core.graph.ExecutionNode import ExecutionNode
 from dag_generator.dag_generator import *
 import argparse
 
+# Run scalability experiments on the generated DAGs.
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("-N", "--nodes", help="Number of nodes in generated graph")
+    parser.add_argument("-S", "--size", help="Number of nodes in generated graph")
     parser.add_argument("-M", "--memory", help="Memory container size")
     parser.add_argument("-I", "--iters", help="Number of iterations to run")
     args = parser.parse_args()
 
-    with open("results/baselines2.txt") as file:
-        settings = [line.rstrip().split() for line in file]
-    file.close()
-
-    # Initialize result storage
-    result_dicts = {}
-    for setting in settings:
-        result_dicts[setting[0] + ' ' + setting[1]] = defaultdict(list)
-
-    existing_iters = 0
-    try:
-        myfile = open("results/result_dicts_" + args.nodes + \
-                         "_" + args.memory + ".txt", "r")
-        for line in myfile.readlines():
-            try:
-                temp = int(line)
-                if temp > existing_iters:
-                    existing_iters = temp
-            except:
-                pass
-    except:
-        pass
-            
-
-    #nx_graphs = run_dag_experiments(int(args.nodes),
-    #                                int(args.iters) - existing_iters - 1)
+    results = []
         
-    for i in range(existing_iters + 1, int(args.iters)):
+    for i in range(int(args.iters)):
         if i % 1 == 0:
             print(i, "---------------------------------")
-        #nx_graph = nx_graphs[i - existing_iters - 1]
-        nx_graph = run_dag_experiments(int(args.nodes), 1)[0]
-        execution_graph = ExecutionGraph()
+
+        # Generate a random graph
+        nx_graph = run_dag_experiments(int(args.size), 1)[0]
+
+        # Manually construct the execution graph
+        execution_graph = ExecutionGraph(None, None, None, "", "")
         for node_id in range(len(nx_graph["parents"])):
-            execution_graph.add_nodes(ExecutionNode(
-                str(node_id),
-                lambda x: x,
-                [str(parent_id) for parent_id in nx_graph["parents"][node_id]]))
-                                      
-            execution_graph.node_dict[str(node_id)].result_size_history \
-                .append(nx_graph["size_out"][node_id])
-            execution_graph.node_dict[str(node_id)].time_to_serialize_history \
-                .append(nx_graph["serialize_time"][node_id])
-            execution_graph.node_dict[str(node_id)].time_to_deserialize_history\
-                .append(nx_graph["deserialize_time"][node_id])
-        execution_graph.build_graph(draw_graph = False)
+            node = ExecutionNode("CREATE TABLE xxx AS (SELECT * FROM yyy);")
+            node.node_name = str(node_id)
+            node.table_size = nx_graph["size_out"][node_id]
+            node.time_save = nx_graph["speedup_score"][node_id]
 
-        default_order = execution_graph.execution_order
+            execution_graph.node_dict[str(node_id)] = node
+            execution_graph.graph.add_node(str(node_id))
 
-        optimizer = Optimizer(execution_graph,
-                          memory_limit = float(args.memory) * 1000000000)
-        
-        for setting in settings:
-            store_nodes_method = setting[0]
-            execution_order_method = setting[1]
+        execution_graph.build_graph()
 
-            execution_graph.execution_order = default_order
-            execution_graph.store_in_memory = set()
+        # Construct the optimizer of choice
+        optimizer_nodes = FlagNodesHeuristic()
+        optimizer_order = OptimizeOrderMADFS()
+        optimizer = Optimizer(float(args.memory) * 1000000000, optimizer_nodes, optimizer_order, debug=False)
 
-            """
-            if store_nodes_method == "mkp" and execution_order_method == "both":
-                debug = True
-            else:
-                debug = False
-            """
-                
-            prev_time_save, _, computation_time = optimizer.optimize(
-                store_nodes_method = store_nodes_method,
-                execution_order_method = execution_order_method,
-                debug = False)
+        # Time the optimization
+        start = time.time()
+        execution_graph.optimize(optimizer)
+        end = time.time()
 
-            result_dicts[setting[0] + ' ' + setting[1]]["computation_time"]\
-                                    .append(computation_time)
-            result_dicts[setting[0] + ' ' + setting[1]]["time save score"]\
-                                    .append(prev_time_save)
-            result_dicts[setting[0] + ' ' + setting[1]]["save time"].append(
-                sum([execution_graph.node_dict[n].get_time_to_serialize()
-                     for n in execution_graph.store_in_memory]))
-            result_dicts[setting[0] + ' ' + setting[1]]["load time"].append(
-                sum([execution_graph.node_dict[n].get_time_to_deserialize()
-                     for n in execution_graph.store_in_memory]))
+        results.append(end - start)
 
-            print(setting, computation_time, prev_time_save)
-
-        myfile = open("results/result_dicts_" + args.nodes + \
-                     "_" + args.memory + ".txt", "a")
-        myfile.write(str(i) + "\n")
-        for setting in settings:
-            myfile.write(setting[0] + ' ' + setting[1] + " " +
-                     "computation_time" + " " +
-                     str(result_dicts[setting[0] + ' ' + setting[1]]
-                         ["computation_time"][-1]) + "\n")
-            myfile.write(setting[0] + ' ' + setting[1] + " " +
-                     "time save score" + " " +
-                     str(result_dicts[setting[0] + ' ' + setting[1]]
-                         ["time save score"][-1]) + "\n")
-            myfile.write(setting[0] + ' ' + setting[1] + " " +
-                     "save time" + " " +
-                     str(result_dicts[setting[0] + ' ' + setting[1]]
-                         ["save time"][-1]) + "\n")
-            myfile.write(setting[0] + ' ' + setting[1] + " " +
-                     "load time" + " " +
-                     str(result_dicts[setting[0] + ' ' + setting[1]]
-                         ["load time"][-1]) + "\n")
-        myfile.close()
+    print("Average optimization time:", sum(results) / len(results))
 
         
